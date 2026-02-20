@@ -214,6 +214,8 @@ export interface LineEval {
     };
 }
 
+
+
 /** A cached evaluation of a specific position. */
 export type SavedEval = PositionEval & {
     /** The name of the engine that generated the evaluation. */
@@ -238,3 +240,9 @@ export interface EvaluatePositionWithUpdateParams {
     /** The callback function that is sent eval updates. */
     setPartialEval?: (positionEval: PositionEval) => void;
 }
+
+// Add to engine.ts constants:
+export const CLOUD_EVAL_ENABLED = {
+    Key: 'cloudEvalEnabled',
+    Default: true,
+};

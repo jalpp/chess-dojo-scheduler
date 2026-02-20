@@ -1,7 +1,9 @@
 import Board from '@/board/Board';
+import { logger } from '@/logging/logger';
 import { EngineInfo, LineEval } from '@/stockfish/engine/engine';
-import { useChessDB, ChessDbPv } from '@/stockfish/hooks/useChessDb';
-import { List, Paper, Popper, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
+import { ChessDbPv, useChessDB } from '@/stockfish/hooks/useChessDb';
+import { Chess, Color, Move } from '@jackstenglein/chess';
+import { Box, List, ListItem, Paper, Popper, Skeleton, styled, Tooltip, Typography } from '@mui/material';
 import { Key } from 'chessground/types';
 import { useRef, useState } from 'react';
 import { ChessContext, useChess } from '../../PgnBoard';
@@ -53,9 +55,8 @@ export const EvaluationSection = ({
                 {Array.from({ length: maxLines }).map((_, i) => (
                     <LineEvaluation engineInfo={engineInfo} key={i} line={allLines[i]} isTop={i === 0} />
                 ))}
+                <CloudEvalSection pv={pv} loading={pvLoading} />
             </List>
-
-            <CloudEvalSection pv={pv} loading={pvLoading} />
 
             <Popper
                 open={Boolean(anchorRef.current && hoverMove)}
@@ -93,37 +94,94 @@ export const EvaluationSection = ({
     );
 };
 
+const CloudMoveLabel = styled('span')(({ theme }) => ({
+    textWrap: 'nowrap',
+    marginLeft: '6px',
+    fontSize: '0.9rem',
+    '&:hover': {
+        color: theme.palette.primary.main,
+        cursor: 'pointer',
+    },
+}));
+
+function cloudPvToMoves(fen: string, pvUci: string[]): (Move | null)[] {
+    const game = new Chess({ fen });
+    return pvUci.map((uci) => {
+        try {
+            return game.move(uci);
+        } catch (e) {
+            logger.error?.(`CDB: Failed to convert UCI ${uci}: `, e);
+            return null;
+        }
+    });
+}
+
+function moveToLabel(move: Move): string {
+    let label = '';
+    if (!move.previous || move.color === Color.white) {
+        label = `${Math.ceil(move.ply / 2)}.`;
+        if (move.color === Color.black) {
+            label += '..';
+        }
+        label += ' ';
+    }
+    label += move.san;
+    return label;
+}
+
 function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: boolean }) {
+    const { chess } = useChess();
+    const currentFen = chess?.fen() ?? '';
+
     const scoreNum = pv?.score ?? 0;
     const isBlack = scoreNum < 0;
-    const scoreLabel = isNaN(scoreNum)
+    const scoreLabel = !pv
         ? '?'
         : `${scoreNum > 0 ? '+' : ''}${(scoreNum / 100).toFixed(2)}`;
 
+    const moves = pv && currentFen ? cloudPvToMoves(currentFen, pv.pv) : [];
+
+    const lastMove = moves.filter(Boolean).at(-1);
+
     return (
-        <Stack
-            direction='row'
-            alignItems='center'
-            spacing={1}
+        <ListItem
+            disablePadding
             sx={{
+                overflowX: 'clip',
+                alignItems: 'center',
                 mt: 0.5,
                 pt: 0.5,
                 borderTop: '1px solid',
                 borderTopColor: 'divider',
-                minHeight: '28px',
+                minHeight: '31px',
             }}
         >
-            <Tooltip title='Chess Cloud Database evaluation' disableInteractive>
+            <Tooltip title='Chess Cloud Database' disableInteractive>
                 <Typography
                     variant='caption'
-                    sx={{ color: 'text.secondary', whiteSpace: 'nowrap', fontStyle: 'italic' }}
+                    sx={{
+                        color: 'text.secondary',
+                        fontStyle: 'italic',
+                        whiteSpace: 'nowrap',
+                        mr: 0.5,
+                        fontSize: '0.75rem',
+                    }}
                 >
                     CDB
                 </Typography>
             </Tooltip>
 
             {loading ? (
-                <Skeleton variant='rounded' animation='wave' width={240} height={18} />
+                <>
+                    <Skeleton
+                        variant='rounded'
+                        animation='wave'
+                        sx={{ color: 'transparent', mr: 0.5, minWidth: '45px', height: '23px' }}
+                    >
+                        placeholder
+                    </Skeleton>
+                    <Skeleton variant='rounded' animation='wave' sx={{ flexGrow: 1 }} />
+                </>
             ) : !pv ? (
                 <Typography variant='caption' sx={{ color: 'text.disabled' }}>
                     Not in cloud database
@@ -131,20 +189,26 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
             ) : (
                 <>
                     <Tooltip title={`Depth ${pv.depth}`} disableInteractive>
-                        <Stack
-                            alignItems='center'
-                            justifyContent='center'
+                        <Box
                             sx={{
-                                px: 0.75,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                mr: 0.5,
+                                my: 0.5,
                                 py: '1px',
+                                width: '45px',
                                 minWidth: '45px',
                                 height: '23px',
+                                minHeight: '23px',
                                 backgroundColor: isBlack ? 'black' : 'white',
                                 borderRadius: '5px',
                                 border: '1px solid',
                                 borderColor: '#424242',
-                                cursor: 'default',
                             }}
+                            data-fen={lastMove?.after}
+                            data-from={lastMove?.from}
+                            data-to={lastMove?.to}
                         >
                             <Typography
                                 component='span'
@@ -154,26 +218,32 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
                                     fontWeight: 'bold',
                                     color: isBlack ? 'white' : 'black',
                                 }}
+                                data-fen={lastMove?.after}
+                                data-from={lastMove?.from}
+                                data-to={lastMove?.to}
                             >
                                 {scoreLabel}
                             </Typography>
-                        </Stack>
+                        </Box>
                     </Tooltip>
 
-                    <Typography
-                        variant='caption'
-                        sx={{
-                            flexGrow: 1,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontSize: '0.9rem',
-                        }}
-                    >
-                        {pv.pvSAN.slice(0, 10).join(' ')}
-                    </Typography>
+                    <Box sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {moves.map((move, idx) => {
+                            if (!move) return null;
+                            return (
+                                <CloudMoveLabel
+                                    key={idx}
+                                    data-fen={move.after}
+                                    data-from={move.from}
+                                    data-to={move.to}
+                                >
+                                    {moveToLabel(move)}
+                                </CloudMoveLabel>
+                            );
+                        })}
+                    </Box>
                 </>
             )}
-        </Stack>
+        </ListItem>
     );
 }
