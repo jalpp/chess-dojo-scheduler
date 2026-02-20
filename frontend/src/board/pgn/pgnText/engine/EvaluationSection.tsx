@@ -1,6 +1,6 @@
 import Board from '@/board/Board';
 import { EngineInfo, LineEval } from '@/stockfish/engine/engine';
-import { ChessDbPv, useChessDB } from '@/stockfish/hooks/useChessDB';
+import { useChessDB, ChessDbPv } from '@/stockfish/hooks/useChessDb';
 import { List, Paper, Popper, Skeleton, Stack, Tooltip, Typography } from '@mui/material';
 import { Key } from 'chessground/types';
 import { useRef, useState } from 'react';
