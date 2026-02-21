@@ -1,5 +1,4 @@
 import { ChessDbMove } from '@/api/cache/chessdb';
-import { getChessDbNoteWord } from '@/stockfish/hooks/useChessDb';
 import { Box, Button, CircularProgress, Stack, Tooltip, Typography } from '@mui/material';
 import { useReconcile } from '../../Board';
 import { useChess } from '../PgnBoard';
@@ -49,7 +48,7 @@ export function ChessDBTab({ moves, loading, error, requestAnalysis }: ChessDBTa
                 return (
                     <Tooltip
                         key={move.uci}
-                        title={`Score: ${move.score} | Winrate: ${move.winrate}% | Note: ${getChessDbNoteWord(move.note)}`}
+                        title={`Score: ${move.score} | Winrate: ${move.winrate}% | Note: ${move.note}`}
                     >
                         <Box
                             onClick={() => { chess?.move(move.san); reconcile(); }}
