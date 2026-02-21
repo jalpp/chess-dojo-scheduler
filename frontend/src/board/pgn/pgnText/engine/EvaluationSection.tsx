@@ -2,7 +2,7 @@ import Board from '@/board/Board';
 import { logger } from '@/logging/logger';
 import { EngineInfo, LineEval } from '@/stockfish/engine/engine';
 import { CLOUD_EVAL_ENABLED } from '@/stockfish/engine/engine';
-import { ChessDbPv} from '@/stockfish/hooks/useChessDb';
+import { ChessDbPv } from '@/api/cache/chessdb';
 import { Chess, Color, Move } from '@jackstenglein/chess';
 import { Box, List, ListItem, Paper, Popper, Skeleton, styled, Tooltip, Typography } from '@mui/material';
 import { Key } from 'chessground/types';
