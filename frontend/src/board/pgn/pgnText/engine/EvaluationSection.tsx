@@ -1,13 +1,16 @@
 import Board from '@/board/Board';
 import { logger } from '@/logging/logger';
 import { EngineInfo, LineEval } from '@/stockfish/engine/engine';
+import { CLOUD_EVAL_ENABLED } from '@/stockfish/engine/engine';
 import { ChessDbPv, useChessDB } from '@/stockfish/hooks/useChessDb';
 import { Chess, Color, Move } from '@jackstenglein/chess';
 import { Box, List, ListItem, Paper, Popper, Skeleton, styled, Tooltip, Typography } from '@mui/material';
 import { Key } from 'chessground/types';
 import { useRef, useState } from 'react';
+import { useLocalStorage } from 'usehooks-ts';
 import { ChessContext, useChess } from '../../PgnBoard';
 import LineEvaluation from './LineEval';
+import { useReconcile } from '@/board/Board';
 
 interface HoverMove {
     fen: string;
@@ -28,6 +31,7 @@ export const EvaluationSection = ({
     const [hoverMove, setHoverMove] = useState<HoverMove>();
     const { board } = useChess();
     const { pv, pvLoading } = useChessDB();
+    const [cloudEvalEnabled] = useLocalStorage(CLOUD_EVAL_ENABLED.Key, CLOUD_EVAL_ENABLED.Default);
 
     const onMouseOver = (event: React.MouseEvent<HTMLElement>) => {
         const element = event.target as HTMLElement;
@@ -55,7 +59,7 @@ export const EvaluationSection = ({
                 {Array.from({ length: maxLines }).map((_, i) => (
                     <LineEvaluation engineInfo={engineInfo} key={i} line={allLines[i]} isTop={i === 0} />
                 ))}
-                <CloudEvalSection pv={pv} loading={pvLoading} />
+                {cloudEvalEnabled && <CloudEvalSection pv={pv} loading={pvLoading} />}
             </List>
 
             <Popper
@@ -98,9 +102,9 @@ const CloudMoveLabel = styled('span')(({ theme }) => ({
     textWrap: 'nowrap',
     marginLeft: '6px',
     fontSize: '0.9rem',
+    cursor: 'pointer',
     '&:hover': {
         color: theme.palette.primary.main,
-        cursor: 'pointer',
     },
 }));
 
@@ -131,6 +135,7 @@ function moveToLabel(move: Move): string {
 
 function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: boolean }) {
     const { chess } = useChess();
+    const reconcile = useReconcile();
     const currentFen = chess?.fen() ?? '';
 
     const scoreNum = pv?.score ?? 0;
@@ -140,8 +145,30 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
         : `${scoreNum > 0 ? '+' : ''}${(scoreNum / 100).toFixed(2)}`;
 
     const moves = pv && currentFen ? cloudPvToMoves(currentFen, pv.pv) : [];
-
     const lastMove = moves.filter(Boolean).at(-1);
+
+    const addCloudMove = (index: number) => {
+        if (!chess || !pv || currentFen !== chess.fen()) return;
+
+        let existingOnly = true;
+        for (let i = 0; i <= index; i++) {
+            const move = chess.move(pv.pv[i], { existingOnly });
+            if (move === null) {
+                existingOnly = false;
+                i--;
+            } else if (!existingOnly) {
+                chess.setCommand('dojoEngine', 'true', move);
+            }
+        }
+
+        reconcile();
+    };
+
+    const onClickEval = () => {
+        if (pv && pv.pv.length > 0) {
+            addCloudMove(pv.pv.length - 1);
+        }
+    };
 
     return (
         <ListItem
@@ -190,6 +217,7 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
                 <>
                     <Tooltip title={`Depth ${pv.depth}`} disableInteractive>
                         <Box
+                            onClick={onClickEval}
                             sx={{
                                 display: 'flex',
                                 justifyContent: 'center',
@@ -205,6 +233,8 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
                                 borderRadius: '5px',
                                 border: '1px solid',
                                 borderColor: '#424242',
+                                cursor: 'pointer',
+                                '&:hover': { opacity: 0.85 },
                             }}
                             data-fen={lastMove?.after}
                             data-from={lastMove?.from}
@@ -236,6 +266,7 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
                                     data-fen={move.after}
                                     data-from={move.from}
                                     data-to={move.to}
+                                    onClick={() => addCloudMove(idx)}
                                 >
                                     {moveToLabel(move)}
                                 </CloudMoveLabel>
