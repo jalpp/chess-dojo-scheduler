@@ -12,9 +12,12 @@ import { KingIcon, RookIcon } from '../../../style/ChessIcons';
 import { useChess } from '../PgnBoard';
 import Database from './Database';
 import Header from './Header';
+import { ChessDBTab } from './ChessDb';
 import { PlayerTab } from './player/PlayerTab';
 import { Tablebase } from './Tablebase';
 import { usePositionGames } from './usePositionGames';
+import { useChessDB } from '@/stockfish/hooks/useChessDb';
+import CloudIcon from '@mui/icons-material/Cloud';
 
 const startingPositionFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -28,12 +31,13 @@ export enum ExplorerDatabaseType {
     Lichess = 'lichess',
     Player = 'player',
     Tablebase = 'tablebase',
+    ChessDB = 'chessdb',
 }
 
 const Explorer = () => {
     const [tab, setTab] = useLocalStorage(explorerTabKey, ExplorerDatabaseType.Dojo);
     const { chess } = useChess();
-    const [fen, setFen] = useState(chess?.fen() || startingPositionFen);
+    const [fen, setFen] = useState(chess?.fen() ?? startingPositionFen);
     const { position, request, putPosition } = usePosition(fen);
     const [minCohort, setMinCohort] = useState('');
     const [maxCohort, setMaxCohort] = useState('');
@@ -46,6 +50,13 @@ const Explorer = () => {
         timeControls,
     });
 
+    const {
+        data: chessDbMoves,
+        loading: chessDbLoading,
+        error: chessDbError,
+        requestAnalysis: chessDbRequestAnalysis,
+    } = useChessDB();
+
     useEffect(() => {
         if (chess) {
             const observer = {
@@ -54,7 +65,7 @@ const Explorer = () => {
                     if (event.type === EventType.Initialized) {
                         setFen(chess.fen());
                     } else {
-                        setFen(event.move?.after || chess.setUpFen());
+                        setFen(event.move?.after ?? chess.setUpFen());
                     }
                 },
             };
@@ -91,7 +102,7 @@ const Explorer = () => {
         );
     };
 
-    const { dojo, masters, lichess, tablebase, follower } = position || {};
+    const { dojo, masters, lichess, tablebase, follower } = position ?? {};
 
     const selectedPosition =
         tab === ExplorerDatabaseType.Dojo
@@ -99,6 +110,41 @@ const Explorer = () => {
             : tab === ExplorerDatabaseType.Masters
               ? masters
               : lichess;
+
+    const renderTabContent = () => {
+        switch (tab) {
+            case ExplorerDatabaseType.Tablebase:
+                return <Tablebase fen={fen} position={tablebase} request={request} />;
+            case ExplorerDatabaseType.Player:
+                return <PlayerTab fen={fen} />;
+            case ExplorerDatabaseType.ChessDB:
+                return (
+                    <ChessDBTab
+                        moves={chessDbMoves}
+                        loading={chessDbLoading}
+                        error={chessDbError}
+                        requestAnalysis={chessDbRequestAnalysis}
+                        fen={fen}
+                    />
+                );
+            default:
+                return (
+                    <Database
+                        type={tab}
+                        fen={fen}
+                        position={selectedPosition}
+                        isLoading={request.isLoading() || !request.isSent()}
+                        minCohort={minCohort}
+                        maxCohort={maxCohort}
+                        setMinCohort={setMinCohort}
+                        setMaxCohort={setMaxCohort}
+                        timeControls={timeControls}
+                        setTimeControls={onSetTimeControls}
+                        pagination={pagination}
+                    />
+                );
+        }
+    };
 
     return (
         <CardContent>
@@ -135,6 +181,14 @@ const Explorer = () => {
                             data-cy='explorer-tab-button-masters'
                         />
                         <Tab
+                            label='ChessDB'
+                            value={ExplorerDatabaseType.ChessDB}
+                            icon={<CloudIcon sx={{ fontSize: '1rem' }} />}
+                            iconPosition='start'
+                            sx={{ minHeight: '48px' }}
+                            data-cy='explorer-tab-button-chessdb'
+                        />
+                        <Tab
                             label='Lichess'
                             value={ExplorerDatabaseType.Lichess}
                             icon={<SiLichess />}
@@ -158,28 +212,11 @@ const Explorer = () => {
                             sx={{ minHeight: '48px' }}
                             data-cy='explorer-tab-button-tablebase'
                         />
+                        
                     </Tabs>
                 </Box>
 
-                {tab === ExplorerDatabaseType.Tablebase ? (
-                    <Tablebase fen={fen} position={tablebase} request={request} />
-                ) : tab === ExplorerDatabaseType.Player ? (
-                    <PlayerTab fen={fen} />
-                ) : (
-                    <Database
-                        type={tab}
-                        fen={fen}
-                        position={selectedPosition}
-                        isLoading={request.isLoading() || !request.isSent()}
-                        minCohort={minCohort}
-                        maxCohort={maxCohort}
-                        setMinCohort={setMinCohort}
-                        setMaxCohort={setMaxCohort}
-                        timeControls={timeControls}
-                        setTimeControls={onSetTimeControls}
-                        pagination={pagination}
-                    />
-                )}
+                {renderTabContent()}
             </TabContext>
         </CardContent>
     );

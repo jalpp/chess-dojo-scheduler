@@ -2,7 +2,7 @@ import Board from '@/board/Board';
 import { logger } from '@/logging/logger';
 import { EngineInfo, LineEval } from '@/stockfish/engine/engine';
 import { CLOUD_EVAL_ENABLED } from '@/stockfish/engine/engine';
-import { ChessDbPv, useChessDB } from '@/stockfish/hooks/useChessDb';
+import { ChessDbPv} from '@/stockfish/hooks/useChessDb';
 import { Chess, Color, Move } from '@jackstenglein/chess';
 import { Box, List, ListItem, Paper, Popper, Skeleton, styled, Tooltip, Typography } from '@mui/material';
 import { Key } from 'chessground/types';
@@ -11,7 +11,7 @@ import { useLocalStorage } from 'usehooks-ts';
 import { ChessContext, useChess } from '../../PgnBoard';
 import LineEvaluation from './LineEval';
 import { useReconcile } from '@/board/Board';
-
+import CloudIcon from '@mui/icons-material/Cloud';
 interface HoverMove {
     fen: string;
     from: Key;
@@ -22,15 +22,18 @@ export const EvaluationSection = ({
     engineInfo,
     allLines,
     maxLines,
+    chessDbpv,
+    chessDbLoading
 }: {
     engineInfo: EngineInfo;
     allLines: LineEval[];
     maxLines: number;
+    chessDbpv: ChessDbPv | null; 
+    chessDbLoading: boolean;
 }) => {
     const anchorRef = useRef<HTMLUListElement>(null);
     const [hoverMove, setHoverMove] = useState<HoverMove>();
     const { board } = useChess();
-    const { pv, pvLoading } = useChessDB();
     const [cloudEvalEnabled] = useLocalStorage(CLOUD_EVAL_ENABLED.Key, CLOUD_EVAL_ENABLED.Default);
 
     const onMouseOver = (event: React.MouseEvent<HTMLElement>) => {
@@ -56,10 +59,10 @@ export const EvaluationSection = ({
                 onMouseOver={onMouseOver}
                 onMouseLeave={onMouseLeave}
             >
+                {cloudEvalEnabled && <CloudEvalSection pv={chessDbpv} loading={chessDbLoading} />}
                 {Array.from({ length: maxLines }).map((_, i) => (
                     <LineEvaluation engineInfo={engineInfo} key={i} line={allLines[i]} isTop={i === 0} />
                 ))}
-                {cloudEvalEnabled && <CloudEvalSection pv={pv} loading={pvLoading} />}
             </List>
 
             <Popper
@@ -184,18 +187,13 @@ function CloudEvalSection({ pv, loading }: { pv: ChessDbPv | null; loading: bool
             }}
         >
             <Tooltip title='Chess Cloud Database' disableInteractive>
-                <Typography
-                    variant='caption'
-                    sx={{
-                        color: 'text.secondary',
-                        fontStyle: 'italic',
+                <CloudIcon 
+                 sx={{
                         whiteSpace: 'nowrap',
                         mr: 0.5,
                         fontSize: '0.75rem',
                     }}
-                >
-                    CDB
-                </Typography>
+                />
             </Tooltip>
 
             {loading ? (

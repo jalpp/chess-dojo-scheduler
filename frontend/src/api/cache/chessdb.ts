@@ -1,4 +1,3 @@
-
 import { openDB } from "idb";
 
 export interface ChessDbMove {
@@ -8,6 +7,18 @@ export interface ChessDbMove {
   winrate: string;
   rank: string;
   note: string;
+}
+
+export interface ChessDbPv {
+  score: number;
+  depth: number;
+  pv: string[];
+  pvSAN: string[];
+}
+
+export interface ChessDbCacheEntry {
+  moves?: ChessDbMove[];
+  pv?: ChessDbPv;
 }
 
 const DB_NAME = "chessDB";
@@ -24,13 +35,21 @@ async function getDb() {
   });
 }
 
-export async function getChessDbCache(fen: string) {
+export async function getChessDbCache(fen: string): Promise<ChessDbCacheEntry | undefined> {
   const db = await getDb();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return db.get(STORE_NAME, fen);
+  return db.get(STORE_NAME, fen) as Promise<ChessDbCacheEntry | undefined>;
 }
 
-export async function setChessDbCache(fen: string, data: ChessDbMove[]) {
+export async function setChessDbMovesCache(fen: string, moves: ChessDbMove[]) {
   const db = await getDb();
-  return db.put(STORE_NAME, data, fen);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const existing: ChessDbCacheEntry = (await db.get(STORE_NAME, fen)) ?? {};
+  return db.put(STORE_NAME, { ...existing, moves }, fen);
+}
+
+export async function setChessDbPvCache(fen: string, pv: ChessDbPv) {
+  const db = await getDb();
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const existing: ChessDbCacheEntry = (await db.get(STORE_NAME, fen)) ?? {};
+  return db.put(STORE_NAME, { ...existing, pv }, fen);
 }

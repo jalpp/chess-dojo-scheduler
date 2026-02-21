@@ -241,7 +241,7 @@ export interface EvaluatePositionWithUpdateParams {
     setPartialEval?: (positionEval: PositionEval) => void;
 }
 
-// Add to engine.ts constants:
+
 export const CLOUD_EVAL_ENABLED = {
     Key: 'cloudEvalEnabled',
     Default: true,
