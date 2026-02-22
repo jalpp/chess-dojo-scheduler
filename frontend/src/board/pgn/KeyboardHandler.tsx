@@ -215,9 +215,6 @@ const KeyboardHandler: React.FC<KeyboardHandlerProps> = ({ underboardRef }) => {
         };
     }, [onKeyDown, onKeyUp, onWheel, boardRef]);
 
-    if (!variationDialogMove) {
-        return null;
-    }
 
     return (
     <>
