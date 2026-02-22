@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { EventType, Move } from '@jackstenglein/chess';
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
@@ -121,6 +122,8 @@ const KeyboardHandler: React.FC<KeyboardHandlerProps> = ({ underboardRef }) => {
                     addEngineMove: addEngineMoveRef?.current || undefined,
                 },
             });
+
+            console.log(viewKeyDialog);
         },
         [
             board,
@@ -130,6 +133,7 @@ const KeyboardHandler: React.FC<KeyboardHandlerProps> = ({ underboardRef }) => {
             toggleOrientation,
             variationBehavior,
             setVariationDialogMove,
+            viewKeyDialog,
             setViewKeyDialog,
             underboardRef,
             reconcile,
