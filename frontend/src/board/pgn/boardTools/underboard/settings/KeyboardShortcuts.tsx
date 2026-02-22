@@ -370,6 +370,8 @@ function handleInsertEngineMove({ opts }: ShortcutHandlerProps) {
 }
 
 function handleViewKeyAction({ opts }: ShortcutHandlerProps) {
+    // eslint-disable-next-line no-console
+    console.log('triggered')
     opts?.setViewKeysDialog?.(true)
 }
 
@@ -442,7 +444,8 @@ export function matchAction(
             matchedAction = action;
         }
     }
-
+    // eslint-disable-next-line no-console
+    console.log('action', matchedAction);
     return matchedAction;
 }
 

@@ -45,13 +45,6 @@ const DisplayKeyboardShortcutsDialog = ({
             </DialogTitle>
 
             <DialogContent dividers>
-                {/*
-                 * KeyboardShortcuts owns all editing state (local-storage bindings,
-                 * the key-capture dialog, etc.).  We just pass the optional actions
-                 * filter and hide the redundant title inside the dialog by passing
-                 * hideReset={false} — keep the reset button so the user can still
-                 * reset from here.
-                 */}
                 <KeyboardShortcuts actions={actions} />
             </DialogContent>
         </Dialog>
