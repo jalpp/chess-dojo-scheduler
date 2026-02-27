@@ -1,5 +1,6 @@
 import { useChess } from '@/board/pgn/PgnBoard';
 import { ENGINE_LINE_COUNT, ENGINE_NAME, engines, LineEval } from '@/stockfish/engine/engine';
+import { useChessDB } from '@/stockfish/hooks/useChessDb';
 import { useEval } from '@/stockfish/hooks/useEval';
 import Icon from '@/style/Icon';
 import { Box, Paper, Stack, Switch, Tooltip, Typography } from '@mui/material';
@@ -24,6 +25,8 @@ export default function EngineSection() {
     const { chess } = useChess();
     const isGameOver = chess?.isGameOver();
 
+    const { pv: chessDbPv, pvLoading: chessDbLoading } = useChessDB();
+
     const engineLines = evaluation?.lines?.length
         ? evaluation.lines
         : (Array.from({ length: Math.max(1, linesNumber) }).map((_, i) => ({
@@ -34,7 +37,6 @@ export default function EngineSection() {
           })) as LineEval[]);
 
     const resultPercentages = engineLines[0]?.resultPercentages;
-
     return (
         <Paper
             elevation={6}
@@ -75,7 +77,7 @@ export default function EngineSection() {
                     )}
 
                     <Stack sx={{ flexGrow: 1, lineHeight: '1.2', color: 'text.secondary' }}>
-                        <Stack direction='row'>
+                        <Stack direction='row' alignItems='center'>
                             <Typography variant='caption' sx={{ display: { '@288': 'none' } }}>
                                 {engineInfo.extraShortName}
                             </Typography>
@@ -90,12 +92,7 @@ export default function EngineSection() {
                                 <Typography
                                     color='dojoOrange'
                                     variant='caption'
-                                    sx={{
-                                        display: {
-                                            '@': 'none',
-                                            '@351': 'initial',
-                                        },
-                                    }}
+                                    sx={{ display: { '@': 'none', '@351': 'initial' } }}
                                 >
                                     <Icon
                                         name={engineInfo.name}
@@ -111,17 +108,14 @@ export default function EngineSection() {
                             </Tooltip>
                         </Stack>
 
-                        {enabled ? (
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: {
-                                        '@': 'column',
-                                        '@319': 'row',
-                                    },
-                                }}
-                            >
-                                {isGameOver ? (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { '@': 'column', '@319': 'row' },
+                            }}
+                        >
+                            {enabled ? (
+                                isGameOver ? (
                                     <Typography variant='caption'>Game Over</Typography>
                                 ) : (
                                     <>
@@ -132,21 +126,18 @@ export default function EngineSection() {
                                             variant='caption'
                                             sx={{
                                                 whiteSpace: 'pre',
-                                                display: {
-                                                    '@': 'none',
-                                                    '@319': 'initial',
-                                                },
+                                                display: { '@': 'none', '@319': 'initial' },
                                             }}
                                         >
                                             {' • '}
                                         </Typography>
                                         <NodesPerSecond nps={engineLines[0].nps} />
                                     </>
-                                )}
-                            </Box>
-                        ) : (
-                            <Typography variant='caption'>{engineInfo.location}</Typography>
-                        )}
+                                )
+                            ) : (
+                                <Typography variant='caption'>{engineInfo.location}</Typography>
+                            )}
+                        </Box>
                     </Stack>
 
                     <Settings />
@@ -154,17 +145,13 @@ export default function EngineSection() {
 
                 {enabled && !isGameOver && (
                     <Stack>
-                        {isGameOver ? (
-                            <Typography align='center' fontSize='0.9rem'>
-                                Game is over
-                            </Typography>
-                        ) : (
-                            <EvaluationSection
-                                engineInfo={engineInfo}
-                                allLines={engineLines}
-                                maxLines={linesNumber}
-                            />
-                        )}
+                        <EvaluationSection
+                            engineInfo={engineInfo}
+                            allLines={engineLines}
+                            maxLines={linesNumber}
+                            chessDbpv={chessDbPv}
+                            chessDbLoading={chessDbLoading}
+                        />
                     </Stack>
                 )}
             </Stack>
@@ -173,9 +160,7 @@ export default function EngineSection() {
 }
 
 function NodesPerSecond({ nps }: { nps?: number }) {
-    if (!nps) {
-        return null;
-    }
+    if (!nps) return null;
 
     let text = '';
     if (nps > 1_000_000) {
