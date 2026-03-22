@@ -96,8 +96,7 @@ export function MaiaDownloadModal({
                     ) : (
                         <Stack spacing={2}>
                             <Typography>
-                                <strong>Maia</strong> is a human-like chess AI developed by the
-                                University of Toronto. It predicts the moves real players make at
+                                <strong>Maia</strong> is a human-like chess AI, It predicts the moves real players make at
                                 each rating level, making it a uniquely challenging and instructive
                                 sparring partner.
                             </Typography>

@@ -220,17 +220,6 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
             >
                 Play vs Maia {maiaRating}
             </Button>
-
-            {/* Attribution */}
-            <Stack direction='row' alignItems='center' spacing={0.5}>
-                <SmartToy sx={{ fontSize: 14 }} color='disabled' />
-                <Typography variant='caption' color='text.secondary'>
-                    Maia by{' '}
-                    <a href='https://csslab.cs.toronto.edu' target='_blank' rel='noopener noreferrer' style={{ color: 'inherit' }}>
-                        U of T CSS Lab
-                    </a>
-                </Typography>
-            </Stack>
         </Stack>
     );
 }

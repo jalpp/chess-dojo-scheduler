@@ -34,9 +34,6 @@ import {
 } from './useMaiaGame';
 import { FEN } from '@jackstenglein/chess';
 
-// ---------------------------------------------------------------------------
-// Result banner
-// ---------------------------------------------------------------------------
 
 const REASON_LABELS: Record<NonNullable<GameOverReason>, string> = {
     checkmate: 'Checkmate',
@@ -87,32 +84,7 @@ function ResultBanner({
     );
 }
 
-// ---------------------------------------------------------------------------
-// Win probability bar
-// ---------------------------------------------------------------------------
 
-function WinProbBar({ prob }: { prob: number | null }) {
-    if (prob === null) return null;
-    const whitePct = Math.round(prob * 100);
-    return (
-        <Stack spacing={0.5}>
-            <Stack direction='row' justifyContent='space-between'>
-                <Typography variant='caption' color='text.secondary'>Maia eval</Typography>
-                <Typography variant='caption' color='text.secondary'>
-                    W {whitePct}% — B {100 - whitePct}%
-                </Typography>
-            </Stack>
-            <Box sx={{ height: 5, borderRadius: 3, overflow: 'hidden', bgcolor: 'grey.800', display: 'flex' }}>
-                <Box sx={{
-                    height: '100%',
-                    width: `${whitePct}%`,
-                    bgcolor: 'grey.100',
-                    transition: 'width 0.35s ease',
-                }} />
-            </Box>
-        </Stack>
-    );
-}
 
 // ---------------------------------------------------------------------------
 // Main controls
@@ -160,9 +132,6 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                 </Typography>
             }
 
-            {/* Win probability */}
-            <WinProbBar prob={maiaWinProb} />
-
             <Box sx={{ flex: 1 }} />
 
             <Divider />
@@ -185,14 +154,6 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                     </Button>
                 )}
             </Stack>
-
-            {/* Attribution */}
-            <Typography variant='caption' color='text.disabled' textAlign='center'>
-                Maia by{' '}
-                <a href='https://csslab.cs.toronto.edu' target='_blank' rel='noopener noreferrer' style={{ color: 'inherit' }}>
-                    U of T CSS Lab
-                </a>
-            </Typography>
         </Stack>
     );
 }
