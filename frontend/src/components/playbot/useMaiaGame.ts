@@ -1,25 +1,12 @@
 'use client';
 
-/**
- * useMaiaGame
- *
- * Drives Maia bot moves against the PgnBoard's Chess instance.
- *
- * This hook is designed to work WITH PgnBoard (not a standalone Board):
- *   - PgnBoard owns the Chess instance
- *   - onInitialize() gives us the Chess+BoardApi references
- *   - We call chess.move(uci) + reconcile(chess, board) to apply bot moves
- *   - Player moves come in via slotProps.board.onMove (already applied to chess)
- *
- * Game state (result, reason, moves, etc.) is derived by observing the
- * Chess instance via the Observer pattern from @jackstenglein/chess.
- */
-
 import { BoardApi, reconcile } from '@/board/Board';
 import { Chess, FEN } from '@jackstenglein/chess';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MaiaRating } from './maiaengine';
 import { UseMaiaEngineResult } from './useMaiaEngine';
+import { TimeControl } from './PlayBotSetup';
+import { getOpeningBookMove } from './openingBook';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,16 +24,23 @@ export interface MoveRecord {
 export type GameResult = 'white' | 'black' | 'draw' | null;
 export type GameOverReason =
     | 'checkmate' | 'stalemate' | 'insufficient'
-    | 'repetition' | 'fifty-move' | 'resign' | null;
+    | 'repetition' | 'fifty-move' | 'resign' | 'timeout' | null;
 
 export interface StartOpts {
     playerColor: PlayerColor;
     maiaRating: MaiaRating;
     startFen?: string;
+    timeControl: TimeControl;
+}
+
+export interface ClockState {
+    whiteMs: number | null;  // null = unlimited
+    blackMs: number | null;
+    /** Which side's clock is currently running */
+    running: 'white' | 'black' | null;
 }
 
 export interface UseMaiaGameResult {
-    // State
     moves: MoveRecord[];
     playerColor: PlayerColor;
     playerToMove: boolean;
@@ -57,20 +51,17 @@ export interface UseMaiaGameResult {
     maiaWinProb: number | null;
     startFen: string;
     gameActive: boolean;
+    timeControl: TimeControl;
+    clock: ClockState;
 
-    // Called by PgnBoard's onInitialize
     onBoardInit: (board: BoardApi, chess: Chess) => void;
-
-    // Called by PgnBoard's slotProps.board.onMove (AFTER chess.move already applied)
     onPlayerMoved: (uci: string) => void;
-
-    // Actions
     startGame: (opts: StartOpts) => void;
     resign: () => void;
 }
 
 // ---------------------------------------------------------------------------
-// Game-over detection
+// Helpers
 // ---------------------------------------------------------------------------
 
 function detectTermination(chess: Chess): { result: GameResult; reason: GameOverReason } {
@@ -88,22 +79,22 @@ function detectTermination(chess: Chess): { result: GameResult; reason: GameOver
 
 function botDelay(): number { return 450 + Math.random() * 800; }
 
+const UNLIMITED_TC: TimeControl = { initialMs: null, incrementMs: 0 };
+
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
 export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
-    // References to PgnBoard's chess+board (set in onBoardInit)
     const chessRef = useRef<Chess | null>(null);
     const boardRef = useRef<BoardApi | null>(null);
 
-    // Game configuration
     const [playerColor, setPlayerColor] = useState<PlayerColor>('white');
     const [maiaRating, setMaiaRating] = useState<MaiaRating>(1500);
     const [startFen, setStartFen] = useState<string>(FEN.start);
     const [gameActive, setGameActive] = useState(false);
+    const [timeControl, setTimeControl] = useState<TimeControl>(UNLIMITED_TC);
 
-    // Game state
     const [moves, setMoves] = useState<MoveRecord[]>([]);
     const [result, setResult] = useState<GameResult>(null);
     const [reason, setReason] = useState<GameOverReason>(null);
@@ -111,22 +102,29 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
     const [botThinking, setBotThinking] = useState(false);
     const [tick, setTick] = useState(0);
 
+    // Clock
+    const [clock, setClock] = useState<ClockState>({ whiteMs: null, blackMs: null, running: null });
+
     // Stable refs
-    const playerColorRef = useRef(playerColor);
-    const resultRef = useRef(result);
-    const maiaRatingRef = useRef(maiaRating);
-    const gameActiveRef = useRef(gameActive);
+    const playerColorRef = useRef<PlayerColor>('white');
+    const resultRef = useRef<GameResult>(null);
+    const maiaRatingRef = useRef<MaiaRating>(1500);
+    const gameActiveRef = useRef(false);
     const cancelBotRef = useRef(false);
     const moveStartRef = useRef(Date.now());
+    const timeControlRef = useRef<TimeControl>(UNLIMITED_TC);
+    // Track last tick timestamp for accurate countdown
+    const clockTickRef = useRef<number>(Date.now());
+    const clockIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     playerColorRef.current = playerColor;
     resultRef.current = result;
     maiaRatingRef.current = maiaRating;
     gameActiveRef.current = gameActive;
+    timeControlRef.current = timeControl;
 
     const refresh = useCallback(() => setTick((t) => t + 1), []);
 
-    // Is it the human's turn?
     const chess = chessRef.current;
     const playerToMove =
         gameActive &&
@@ -135,7 +133,82 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         (chess.turn() === 'w') === (playerColor === 'white');
 
     // ------------------------------------------------------------------
-    // Bot move logic
+    // Clock tick — runs every 100ms when a clock is active
+    // ------------------------------------------------------------------
+    const startClockInterval = useCallback(() => {
+        if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+        clockTickRef.current = Date.now();
+
+        clockIntervalRef.current = setInterval(() => {
+            if (resultRef.current !== null) {
+                if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+                return;
+            }
+
+            const now = Date.now();
+            const elapsed = now - clockTickRef.current;
+            clockTickRef.current = now;
+
+            setClock((prev) => {
+                if (!prev.running) return prev;
+                const side = prev.running;
+                const current = side === 'white' ? prev.whiteMs : prev.blackMs;
+                if (current === null) return prev; // unlimited
+
+                const next = Math.max(0, current - elapsed);
+
+                if (next === 0) {
+                    // Timeout — flag the losing side
+                    if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+                    const winner: GameResult = side === 'white' ? 'black' : 'white';
+                    // Use setTimeout to avoid setState-in-render
+                    setTimeout(() => {
+                        setResult(winner);
+                        setReason('timeout');
+                        setClock((c) => ({ ...c, running: null }));
+                    }, 0);
+                    return { ...prev, [side === 'white' ? 'whiteMs' : 'blackMs']: 0, running: null };
+                }
+
+                return { ...prev, [side === 'white' ? 'whiteMs' : 'blackMs']: next };
+            });
+        }, 100);
+    }, []);
+
+    const stopClock = useCallback(() => {
+        if (clockIntervalRef.current) {
+            clearInterval(clockIntervalRef.current);
+            clockIntervalRef.current = null;
+        }
+        setClock((prev) => ({ ...prev, running: null }));
+    }, []);
+
+    // Add increment to the side that just moved and switch clock to opponent
+    const switchClock = useCallback((justMoved: 'white' | 'black') => {
+        const tc = timeControlRef.current;
+        if (tc.initialMs === null) return; // unlimited, no clock needed
+
+        setClock((prev) => {
+            const inc = tc.incrementMs;
+            const updatedMs =
+                justMoved === 'white'
+                    ? { whiteMs: prev.whiteMs !== null ? prev.whiteMs + inc : null }
+                    : { blackMs: prev.blackMs !== null ? prev.blackMs + inc : null };
+            return { ...prev, ...updatedMs, running: justMoved === 'white' ? 'black' : 'white' };
+        });
+        clockTickRef.current = Date.now();
+        if (!clockIntervalRef.current) startClockInterval();
+    }, [startClockInterval]);
+
+    // Clean up on unmount
+    useEffect(() => {
+        return () => {
+            if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+        };
+    }, []);
+
+    // ------------------------------------------------------------------
+    // Bot move
     // ------------------------------------------------------------------
     const makeBotMove = useCallback(async () => {
         const chess = chessRef.current;
@@ -150,34 +223,51 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         try {
             const fen = chess.fen();
             const rating = maiaRatingRef.current;
-            const evalResult = await engine.evaluate(fen, rating, rating);
+            const plyCount = chess.plyCount();
+
+            // Opening book (Posira API) for the first OPENING_PLY_LIMIT half-moves.
+            // Falls back to Maia ONNX silently if no book move is found.
+            let bestMove: string | null = null;
+
+            const bookMove = await getOpeningBookMove(fen, rating, plyCount);
             if (cancelBotRef.current) return;
 
-            // win prob: normalise to white's perspective
-            const isBlack = fen.split(' ')[1] === 'b';
-            setMaiaWinProb(isBlack ? 1 - evalResult.value : evalResult.value);
+            if (bookMove) {
+                bestMove = bookMove.uci;
+                // Keep showing last Maia eval — no update from book
+            } else {
+                const evalResult = await engine.evaluate(fen, rating, rating);
+                if (cancelBotRef.current) return;
+                const isBlack = fen.split(' ')[1] === 'b';
+                setMaiaWinProb(isBlack ? 1 - evalResult.value : evalResult.value);
+                bestMove = evalResult.bestMove || null;
+            }
 
             await new Promise<void>((res) => setTimeout(res, botDelay()));
             if (cancelBotRef.current) return;
 
-            if (evalResult.bestMove) {
+            if (bestMove) {
                 const elapsed = Date.now() - moveStartRef.current;
-                console.log(evalResult);
                 moveStartRef.current = Date.now();
 
-                const move = chess.move(evalResult.bestMove);
+                const move = chess.move(bestMove);
                 if (move) {
                     reconcile(chess, board);
                     setMoves((prev) => [...prev, {
                         san: move.san,
-                        uci: move.uci ?? evalResult.bestMove,
+                        uci: move.uci ?? bestMove!,
                         fen: move.fen ?? chess.fen(),
                         ms: elapsed,
                     }]);
+
+                    const botColor = playerColorRef.current === 'white' ? 'black' : 'white';
+                    switchClock(botColor);
+
                     const term = detectTermination(chess);
                     if (term.result !== null) {
                         setResult(term.result);
                         setReason(term.reason);
+                        stopClock();
                     }
                     refresh();
                 }
@@ -187,9 +277,8 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         } finally {
             if (!cancelBotRef.current) setBotThinking(false);
         }
-    }, [engine, refresh]);
+    }, [engine, refresh, switchClock, stopClock]);
 
-    // Trigger bot move when it's the bot's turn
     useEffect(() => {
         if (!gameActive) return;
         if (result !== null) return;
@@ -201,7 +290,7 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
     }, [tick, gameActive, engine.status, result, playerToMove, botThinking]);
 
     // ------------------------------------------------------------------
-    // PgnBoard callbacks
+    // Board callbacks
     // ------------------------------------------------------------------
 
     const onBoardInit = useCallback((board: BoardApi, chess: Chess) => {
@@ -210,28 +299,32 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         refresh();
     }, [refresh]);
 
-    /** Called after player's move is already applied to chess by slotProps.board.onMove */
     const onPlayerMoved = useCallback((uci: string) => {
         const chess = chessRef.current;
         if (!chess) return;
-        // The move was already applied — just read the last move from chess history
         const lastMove = chess.currentMove();
         if (!lastMove) return;
         const elapsed = Date.now() - moveStartRef.current;
         moveStartRef.current = Date.now();
+
         setMoves((prev) => [...prev, {
             san: lastMove.san,
             uci: lastMove.uci ?? uci,
             fen: lastMove.fen ?? chess.fen(),
             ms: elapsed,
         }]);
+
+        // Switch clock after player move
+        switchClock(playerColorRef.current);
+
         const term = detectTermination(chess);
         if (term.result !== null) {
             setResult(term.result);
             setReason(term.reason);
+            stopClock();
         }
         refresh();
-    }, [refresh]);
+    }, [refresh, switchClock, stopClock]);
 
     // ------------------------------------------------------------------
     // Public actions
@@ -239,33 +332,71 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
 
     const startGame = useCallback((opts: StartOpts) => {
         cancelBotRef.current = true;
+        if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+        clockIntervalRef.current = null;
         setBotThinking(false);
         setMoves([]);
         setResult(null);
         setReason(null);
         setMaiaWinProb(null);
         setPlayerColor(opts.playerColor);
+        playerColorRef.current = opts.playerColor;
         setMaiaRating(opts.maiaRating);
+        maiaRatingRef.current = opts.maiaRating;
         setStartFen(opts.startFen || FEN.start);
+        setTimeControl(opts.timeControl);
+        timeControlRef.current = opts.timeControl;
         setGameActive(true);
+        gameActiveRef.current = true;
         moveStartRef.current = Date.now();
+
+        // Init clocks
+        const initMs = opts.timeControl.initialMs;
+        const initClock: ClockState = {
+            whiteMs: initMs,
+            blackMs: initMs,
+            running: null, // white's clock starts when they make their first move
+        };
+        setClock(initClock);
+
+        // If player is black, bot (white) moves first — start white's clock immediately
+        // White's clock runs until white makes a move; we start it now for the bot
+        if (opts.playerColor === 'black' && initMs !== null) {
+            setTimeout(() => {
+                setClock((c) => ({ ...c, running: 'white' }));
+                clockTickRef.current = Date.now();
+                startClockInterval();
+            }, 100);
+        } else if (opts.playerColor === 'white' && initMs !== null) {
+            // Player is white — start white's clock immediately (player moves first)
+            setTimeout(() => {
+                setClock((c) => ({ ...c, running: 'white' }));
+                clockTickRef.current = Date.now();
+                startClockInterval();
+            }, 100);
+        }
+
         setTimeout(() => {
             cancelBotRef.current = false;
             refresh();
         }, 80);
-    }, [refresh]);
+    }, [refresh, startClockInterval]);
 
     const resign = useCallback(() => {
         if (resultRef.current !== null) return;
         cancelBotRef.current = true;
+        if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
+        clockIntervalRef.current = null;
         setBotThinking(false);
         setResult(playerColorRef.current === 'white' ? 'black' : 'white');
         setReason('resign');
+        setClock((c) => ({ ...c, running: null }));
     }, []);
 
     return {
         moves, playerColor, playerToMove, botThinking,
         result, reason, maiaRating, maiaWinProb, startFen, gameActive,
+        timeControl, clock,
         onBoardInit, onPlayerMoved, startGame, resign,
     };
 }

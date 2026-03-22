@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * PlayBotSetup
- *
- * Inline setup panel shown in the sidebar before the game starts.
- * Compact — designed to sit alongside the board at all times.
- * Includes optional custom FEN input.
- */
-
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
 import { PlayerColor } from './useMaiaGame';
 import {
@@ -18,6 +10,7 @@ import {
     Collapse,
     Divider,
     FormControl,
+    InputAdornment,
     MenuItem,
     Select,
     Stack,
@@ -27,16 +20,23 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { PlayArrow, SmartToy, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { PlayArrow, SmartToy, ExpandMore, ExpandLess, Timer } from '@mui/icons-material';
 import { useState } from 'react';
 import { Chess, FEN } from '@jackstenglein/chess';
 
 type ColorChoice = PlayerColor | 'random';
 
+export interface TimeControl {
+    /** null = unlimited */
+    initialMs: number | null;
+    incrementMs: number;
+}
+
 export interface PlayBotStartOpts {
     playerColor: PlayerColor;
     maiaRating: MaiaRating;
     startFen: string;
+    timeControl: TimeControl;
 }
 
 interface PlayBotSetupProps {
@@ -56,6 +56,34 @@ const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
     1900: 'Master Level',
 };
 
+interface TimePreset {
+    label: string;
+    category: string;
+    mins: number;
+    inc: number;
+}
+
+const TIME_PRESETS: TimePreset[] = [
+    { label: '1+0', category: 'Bullet', mins: 1, inc: 0 },
+    { label: '2+1', category: 'Bullet', mins: 2, inc: 1 },
+    { label: '3+0', category: 'Blitz', mins: 3, inc: 0 },
+    { label: '3+2', category: 'Blitz', mins: 3, inc: 2 },
+    { label: '5+0', category: 'Blitz', mins: 5, inc: 0 },
+    { label: '5+3', category: 'Blitz', mins: 5, inc: 3 },
+    { label: '10+0', category: 'Rapid', mins: 10, inc: 0 },
+    { label: '10+5', category: 'Rapid', mins: 10, inc: 5 },
+    { label: '15+10', category: 'Rapid', mins: 15, inc: 10 },
+    { label: '30+0', category: 'Classical', mins: 30, inc: 0 },
+    { label: '30+20', category: 'Classical', mins: 30, inc: 20 },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+    Bullet: '#f44336',
+    Blitz: '#ff9800',
+    Rapid: '#4caf50',
+    Classical: '#2196f3',
+};
+
 function isValidFen(fen: string): boolean {
     try {
         new Chess({ fen });
@@ -68,6 +96,14 @@ function isValidFen(fen: string): boolean {
 export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProps) {
     const [colorChoice, setColorChoice] = useState<ColorChoice>('white');
     const [maiaRating, setMaiaRating] = useState<MaiaRating>(initialRating);
+
+    // Time control state
+    // 'unlimited' | preset label | 'custom'
+    const [selectedTime, setSelectedTime] = useState<string>('10+0');
+    const [customMins, setCustomMins] = useState('10');
+    const [customInc, setCustomInc] = useState('0');
+
+    // FEN state
     const [showFen, setShowFen] = useState(false);
     const [fenInput, setFenInput] = useState('');
     const [fenError, setFenError] = useState('');
@@ -81,14 +117,27 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
         }
     };
 
+    const resolveTimeControl = (): TimeControl => {
+        if (selectedTime === 'unlimited') {
+            return { initialMs: null, incrementMs: 0 };
+        }
+        if (selectedTime === 'custom') {
+            const mins = Math.max(0, parseFloat(customMins) || 0);
+            const inc = Math.max(0, parseFloat(customInc) || 0);
+            if (mins === 0 && inc === 0) return { initialMs: null, incrementMs: 0 };
+            return { initialMs: mins * 60 * 1000, incrementMs: inc * 1000 };
+        }
+        const preset = TIME_PRESETS.find(p => p.label === selectedTime);
+        if (!preset) return { initialMs: null, incrementMs: 0 };
+        return { initialMs: preset.mins * 60 * 1000, incrementMs: preset.inc * 1000 };
+    };
+
     const handleStart = () => {
-        // Resolve color
         const playerColor: PlayerColor =
             colorChoice === 'random'
                 ? Math.random() < 0.5 ? 'white' : 'black'
                 : colorChoice;
 
-        // Resolve start FEN
         const trimmed = fenInput.trim();
         if (trimmed && !isValidFen(trimmed)) {
             setFenError('Invalid FEN position');
@@ -96,12 +145,16 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
         }
         const startFen = trimmed || FEN.start;
 
-        onStart({ playerColor, maiaRating, startFen });
+        onStart({ playerColor, maiaRating, startFen, timeControl: resolveTimeControl() });
     };
+
+    const customMinsNum = parseFloat(customMins) || 0;
+    const customIncNum = parseFloat(customInc) || 0;
+    const customValid = selectedTime !== 'custom' || customMinsNum >= 0;
 
     return (
         <Stack spacing={2.5}>
-            {/* Rating picker */}
+            {/* Rating */}
             <Stack spacing={0.75}>
                 <Typography variant='subtitle2' fontWeight='bold' color='text.secondary'>
                     MAIA RATING
@@ -125,7 +178,108 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
 
             <Divider />
 
-            {/* Color picker */}
+            {/* Time control */}
+            <Stack spacing={1}>
+                <Stack direction='row' alignItems='center' spacing={0.5}>
+                    <Timer sx={{ fontSize: 14 }} color='action' />
+                    <Typography variant='subtitle2' fontWeight='bold' color='text.secondary'>
+                        TIME CONTROL
+                    </Typography>
+                </Stack>
+
+                {/* Preset grid */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {/* Unlimited */}
+                    <Chip
+                        label='Unlimited'
+                        size='small'
+                        onClick={() => setSelectedTime('unlimited')}
+                        variant={selectedTime === 'unlimited' ? 'filled' : 'outlined'}
+                        color={selectedTime === 'unlimited' ? 'primary' : 'default'}
+                        sx={{ cursor: 'pointer' }}
+                    />
+                    {/* Presets grouped by category */}
+                    {TIME_PRESETS.map((preset) => (
+                        <Tooltip key={preset.label} title={preset.category}>
+                            <Chip
+                                label={preset.label}
+                                size='small'
+                                onClick={() => setSelectedTime(preset.label)}
+                                variant={selectedTime === preset.label ? 'filled' : 'outlined'}
+                                sx={{
+                                    cursor: 'pointer',
+                                    borderColor: CATEGORY_COLORS[preset.category],
+                                    color: selectedTime === preset.label ? 'white' : CATEGORY_COLORS[preset.category],
+                                    bgcolor: selectedTime === preset.label ? CATEGORY_COLORS[preset.category] : 'transparent',
+                                    '&:hover': {
+                                        bgcolor: selectedTime === preset.label
+                                            ? CATEGORY_COLORS[preset.category]
+                                            : `${CATEGORY_COLORS[preset.category]}22`,
+                                    },
+                                }}
+                            />
+                        </Tooltip>
+                    ))}
+                    {/* Custom */}
+                    <Chip
+                        label='Custom'
+                        size='small'
+                        onClick={() => setSelectedTime('custom')}
+                        variant={selectedTime === 'custom' ? 'filled' : 'outlined'}
+                        color={selectedTime === 'custom' ? 'secondary' : 'default'}
+                        sx={{ cursor: 'pointer' }}
+                    />
+                </Box>
+
+                {/* Custom inputs */}
+                <Collapse in={selectedTime === 'custom'}>
+                    <Stack direction='row' spacing={1} mt={0.5}>
+                        <TextField
+                            size='small'
+                            label='Minutes'
+                            type='number'
+                            value={customMins}
+                            onChange={(e) => setCustomMins(e.target.value)}
+                            inputProps={{ min: 0, max: 180, step: 1 }}
+                            InputProps={{
+                                endAdornment: <InputAdornment position='end'>min</InputAdornment>,
+                            }}
+                            sx={{ flex: 1 }}
+                        />
+                        <TextField
+                            size='small'
+                            label='Increment'
+                            type='number'
+                            value={customInc}
+                            onChange={(e) => setCustomInc(e.target.value)}
+                            inputProps={{ min: 0, max: 60, step: 1 }}
+                            InputProps={{
+                                endAdornment: <InputAdornment position='end'>sec</InputAdornment>,
+                            }}
+                            sx={{ flex: 1 }}
+                        />
+                    </Stack>
+                    {selectedTime === 'custom' && customMinsNum === 0 && customIncNum === 0 && (
+                        <Typography variant='caption' color='text.secondary' mt={0.5} display='block'>
+                            Both 0 → Unlimited
+                        </Typography>
+                    )}
+                </Collapse>
+
+                {/* Category legend */}
+                <Stack direction='row' flexWrap='wrap' gap={1} mt={0.25}>
+                    {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+                        <Stack key={cat} direction='row' alignItems='center' spacing={0.4}>
+                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
+                            <Typography variant='caption' color='text.secondary'>{cat}</Typography>
+                        </Stack>
+                    ))}
+                </Stack>
+            </Stack>
+
+            <Divider />
+
+            {/* Color */}
             <Stack spacing={0.75}>
                 <Typography variant='subtitle2' fontWeight='bold' color='text.secondary'>
                     PLAY AS
@@ -161,7 +315,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
 
             <Divider />
 
-            {/* Custom FEN (collapsible) */}
+            {/* Custom FEN */}
             <Stack spacing={0.75}>
                 <Button
                     size='small'
@@ -209,13 +363,12 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
 
             <Divider />
 
-            {/* Start button */}
             <Button
                 variant='contained'
                 size='large'
                 startIcon={<PlayArrow />}
                 onClick={handleStart}
-                disabled={!!fenError}
+                disabled={!!fenError || !customValid}
                 fullWidth
             >
                 Play vs Maia {maiaRating}
