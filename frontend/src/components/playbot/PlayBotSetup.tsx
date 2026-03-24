@@ -20,7 +20,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { PlayArrow, SmartToy, ExpandMore, ExpandLess, Timer } from '@mui/icons-material';
+import { PlayArrow, ExpandMore, ExpandLess, Timer } from '@mui/icons-material';
 import { useState } from 'react';
 import { Chess, FEN } from '@jackstenglein/chess';
 

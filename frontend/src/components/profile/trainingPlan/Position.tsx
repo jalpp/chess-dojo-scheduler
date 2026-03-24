@@ -3,9 +3,10 @@ import { axiosService } from '@/api/axiosService';
 import { RequestSnackbar, useRequest } from '@/api/Request';
 import Board from '@/board/Board';
 import { getLigaIconBasedOnTimeControl } from '@/components/calendar/eventViewer/LigaTournamentViewer';
+import { PlayMaiaDialog } from '@/components/playbot/PlayMaiaDialog';
 import { Position as PositionModel } from '@/database/requirement';
 import Icon from '@/style/Icon';
-import { Biotech } from '@mui/icons-material';
+import { Biotech, SmartToy } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import { LoadingButton } from '@mui/lab';
@@ -44,6 +45,7 @@ const Position = ({ position, orientation }: PositionProps) => {
     const lichessRequest = useRequest();
     const playComputerAnchor = useRef<HTMLButtonElement>(null);
     const [playComputerOpen, setPlayComputerOpen] = useState(false);
+    const [playMaiaOpen, setPlayMaiaOpen] = useState(false);
 
     const onCopy = (name: string) => {
         setCopied(name);
@@ -190,6 +192,15 @@ const Position = ({ position, orientation }: PositionProps) => {
                     </Button>
                 </Tooltip>
 
+                <Tooltip title='Play this position against Maia — a human-like chess AI'>
+                    <Button
+                        startIcon={<SmartToy color='primary' />}
+                        onClick={() => setPlayMaiaOpen(true)}
+                    >
+                        Play Maia
+                    </Button>
+                </Tooltip>
+
                 <Menu
                     open={playComputerOpen}
                     onClose={() => setPlayComputerOpen(false)}
@@ -215,6 +226,17 @@ const Position = ({ position, orientation }: PositionProps) => {
                     </MenuItem>
                 </Menu>
             </CardActions>
+
+
+            <PlayMaiaDialog
+                open={playMaiaOpen}
+                onClose={() => setPlayMaiaOpen(false)}
+                fen={position.fen.trim()}
+                limitSeconds={position.limitSeconds}
+                incrementSeconds={position.incrementSeconds}
+                positionTitle={position.title}
+                playerColor={turnColor(position.fen)}
+            />
         </Card>
     );
 };
