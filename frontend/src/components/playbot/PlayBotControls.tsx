@@ -6,6 +6,7 @@ import {
     EmojiEvents,
     Flag,
     Handshake,
+    SaveOutlined,
     SmartToy,
 } from '@mui/icons-material';
 import {
@@ -25,6 +26,8 @@ import {
     UseMaiaGameResult,
 } from './useMaiaGame';
 import { FEN } from '@jackstenglein/chess';
+import { useState } from 'react';
+import { SaveMaiaGameDialog } from './SaveGameDialog';
 
 // ---------------------------------------------------------------------------
 // Clock display
@@ -164,6 +167,8 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
         clock, timeControl,
     } = game;
 
+    const [saveOpen, setSaveOpen] = useState(false);
+
     const gameOver = result !== null;
     const canResign = !gameOver && moves.length >= 2;
     const isTimed = timeControl.initialMs !== null;
@@ -257,12 +262,29 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                     </Button>
                 )}
                 {gameOver && moves.length > 0 && (
-                    <Button variant='outlined' startIcon={<Analytics />}
-                        href={analyzeHref} component='a' fullWidth size='small'>
-                        Analyze Game
+                    <Button
+                        variant='outlined'
+                        startIcon={<SaveOutlined />}
+                        onClick={() => setSaveOpen(true)}
+                        fullWidth
+                        size='small'
+                    >
+                        Save Game
                     </Button>
                 )}
             </Stack>
+
+            {result !== null && moves.length > 0 && (
+                <SaveMaiaGameDialog
+                    open={saveOpen}
+                    onClose={() => setSaveOpen(false)}
+                    result={result}
+                    moves={moves}
+                    playerColor={playerColor}
+                    maiaRating={maiaRating}
+                    startFen={startFen}
+                />
+            )}
         </Stack>
     );
 }
