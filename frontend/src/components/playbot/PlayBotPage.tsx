@@ -190,7 +190,9 @@ export function PlayBotPage() {
                 onDownload={engine.downloadModel}
             />
 
-            <Box sx={{ px: { xs: 1, sm: 3 }, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }} />
+            <Box
+                sx={{ px: { xs: 1, sm: 3 }, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+            />
 
             <PgnBoard
                 ref={pgnBoardRef}

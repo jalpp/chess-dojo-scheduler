@@ -192,12 +192,12 @@ const Position = ({ position, orientation }: PositionProps) => {
                     </Button>
                 </Tooltip>
 
-                <Tooltip title='Play this position against Maia — a human-like chess AI'>
+                <Tooltip title='Play this position against Maia, a neural network which is trained on human games'>
                     <Button
                         startIcon={<SmartToy color='primary' />}
                         onClick={() => setPlayMaiaOpen(true)}
                     >
-                        Play Maia
+                        Play Bot
                     </Button>
                 </Tooltip>
 

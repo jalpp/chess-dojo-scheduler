@@ -31,8 +31,6 @@ interface PlayMaiaDialogProps {
     playerColor: 'white' | 'black';
 }
 
-
-
 export function PlayMaiaDialog({
     open,
     onClose,

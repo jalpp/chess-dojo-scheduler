@@ -22,8 +22,8 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
-import { PlayerColor } from './useMaiaGame';
 import { RATING_DESCRIPTIONS } from './playbot';
+import { PlayerColor } from './useMaiaGame';
 
 type ColorChoice = PlayerColor | 'random';
 
@@ -44,7 +44,6 @@ interface PlayBotSetupProps {
     onStart: (opts: PlayBotStartOpts) => void;
     initialRating?: MaiaRating;
 }
-
 
 interface TimePreset {
     label: string;
@@ -411,7 +410,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                 disabled={!!fenError || !customValid}
                 fullWidth
             >
-                Play vs Dojo Sparring Bot {maiaRating}
+                Play vs Maia {maiaRating}
             </Button>
         </Stack>
     );

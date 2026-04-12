@@ -70,7 +70,7 @@ function buildPgn(opts: {
         `[Black "${blackName}"]`,
         `[Result "${resultTag}"]`,
         `[Date "${dateStr}"]`,
-        `[Site "ChessDojo — Play Dojo Sparring Bot ${maiaRating}"]`,
+        `[Site "ChessDojo — Play Maia ${maiaRating}"]`,
         ...(isCustomStart ? [`[SetUp "1"]`, `[FEN "${startFen}"]`] : []),
     ].join('\n');
 
