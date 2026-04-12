@@ -23,6 +23,7 @@ import {
 import { useState } from 'react';
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
 import { PlayerColor } from './useMaiaGame';
+import { RATING_DESCRIPTIONS } from './playbot';
 
 type ColorChoice = PlayerColor | 'random';
 
@@ -44,17 +45,6 @@ interface PlayBotSetupProps {
     initialRating?: MaiaRating;
 }
 
-const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
-    1100: 'Beginner',
-    1200: 'Advanced Beginner',
-    1300: 'Intermediate',
-    1400: 'Intermediate',
-    1500: 'Advanced Intermediate',
-    1600: 'Club Player',
-    1700: 'Strong Club Player',
-    1800: 'Expert',
-    1900: 'Advanced Expert',
-};
 
 interface TimePreset {
     label: string;

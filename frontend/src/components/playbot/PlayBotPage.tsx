@@ -7,7 +7,7 @@ import { useNextSearchParams } from '@/hooks/useNextSearchParams';
 import { Chess, FEN } from '@jackstenglein/chess';
 import { SmartToy } from '@mui/icons-material';
 import { Box } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { MaiaDownloadModal } from './MaiaDownloadModal';
 import { MaiaRating } from './maiaengine';
 import { PlayBotAfterPgn } from './PlayBotAfterPgn';
@@ -18,7 +18,6 @@ import { useMaiaGame } from './useMaiaGame';
 
 type PageView = 'setup' | 'playing';
 
-/** Parse query params from /play-bot?fen=...&mins=...&inc=...&color=... */
 function parseQueryOpts(searchParams: URLSearchParams): PlayBotStartOpts | null {
     const fen = searchParams.get('fen');
     if (!fen) return null;
@@ -44,34 +43,31 @@ function parseQueryOpts(searchParams: URLSearchParams): PlayBotStartOpts | null 
         validRatings.includes(ratingNum as MaiaRating) ? ratingNum : 1500
     ) as MaiaRating;
 
-    return {
-        playerColor,
-        maiaRating,
-        startFen: fen.trim(),
-        timeControl,
-    };
+    return { playerColor, maiaRating, startFen: fen.trim(), timeControl };
 }
 
-export function PlayBotPage() {
-    const engine = useMaiaEngine();
-    const maiaGame = useMaiaGame(engine);
+interface PlayBotAutoStartProps {
+    engine: ReturnType<typeof useMaiaEngine>;
+    maiaGame: ReturnType<typeof useMaiaGame>;
+    setView: (v: PageView) => void;
+    setActiveRating: (r: MaiaRating) => void;
+    setBoardFen: (f: string) => void;
+    setBoardOrientation: (o: 'white' | 'black') => void;
+    setInitKey: React.Dispatch<React.SetStateAction<number>>;
+    autoStartedRef: React.MutableRefObject<boolean>;
+}
+
+function PlayBotAutoStart({
+    engine,
+    maiaGame,
+    setView,
+    setActiveRating,
+    setBoardFen,
+    setBoardOrientation,
+    setInitKey,
+    autoStartedRef,
+}: PlayBotAutoStartProps) {
     const { searchParams } = useNextSearchParams();
-
-    const [view, setView] = useState<PageView>('setup');
-    const [activeRating, setActiveRating] = useState<MaiaRating>(1500);
-    const [boardFen, setBoardFen] = useState<string>(FEN.start);
-    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
-    const [initKey, setInitKey] = useState(0);
-
-    const pgnBoardRef = useRef<PgnBoardApi>(null);
-    // Track whether we've already consumed the query params auto-start
-    const autoStartedRef = useRef(false);
-
-    const modelLoading =
-        engine.status === 'idle' ||
-        engine.status === 'loading' ||
-        engine.status === 'no-cache' ||
-        engine.status === 'downloading';
 
     useEffect(() => {
         if (autoStartedRef.current) return;
@@ -88,6 +84,28 @@ export function PlayBotPage() {
         setView('playing');
         setInitKey((k) => k + 1);
     }, [engine.status, searchParams, maiaGame]);
+
+    return null;
+}
+
+export function PlayBotPage() {
+    const engine = useMaiaEngine();
+    const maiaGame = useMaiaGame(engine);
+
+    const [view, setView] = useState<PageView>('setup');
+    const [activeRating, setActiveRating] = useState<MaiaRating>(1500);
+    const [boardFen, setBoardFen] = useState<string>(FEN.start);
+    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
+    const [initKey, setInitKey] = useState(0);
+
+    const pgnBoardRef = useRef<PgnBoardApi>(null);
+    const autoStartedRef = useRef(false);
+
+    const modelLoading =
+        engine.status === 'idle' ||
+        engine.status === 'loading' ||
+        engine.status === 'no-cache' ||
+        engine.status === 'downloading';
 
     const onInitialize = useCallback(
         (board: BoardApi, chess: Chess) => {
@@ -151,6 +169,19 @@ export function PlayBotPage() {
 
     return (
         <Box sx={{ pt: { xs: 1, sm: 2 } }}>
+            <Suspense fallback={null}>
+                <PlayBotAutoStart
+                    engine={engine}
+                    maiaGame={maiaGame}
+                    setView={setView}
+                    setActiveRating={setActiveRating}
+                    setBoardFen={setBoardFen}
+                    setBoardOrientation={setBoardOrientation}
+                    setInitKey={setInitKey}
+                    autoStartedRef={autoStartedRef}
+                />
+            </Suspense>
+
             <MaiaDownloadModal
                 open={modelLoading}
                 status={engine.status}
@@ -159,15 +190,7 @@ export function PlayBotPage() {
                 onDownload={engine.downloadModel}
             />
 
-            <Box
-                sx={{
-                    px: { xs: 1, sm: 3 },
-                    pb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                }}
-            ></Box>
+            <Box sx={{ px: { xs: 1, sm: 3 }, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }} />
 
             <PgnBoard
                 ref={pgnBoardRef}

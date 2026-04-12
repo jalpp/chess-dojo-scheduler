@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
+import { RATING_DESCRIPTIONS } from './playbot';
 
 interface PlayMaiaDialogProps {
     open: boolean;
@@ -30,17 +31,7 @@ interface PlayMaiaDialogProps {
     playerColor: 'white' | 'black';
 }
 
-const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
-    1100: 'Very Beginner',
-    1200: 'Beginner',
-    1300: 'Casual',
-    1400: 'Intermediate',
-    1500: 'Club Player',
-    1600: 'Strong Club',
-    1700: 'Tournament',
-    1800: 'Expert',
-    1900: 'Master Level',
-};
+
 
 export function PlayMaiaDialog({
     open,

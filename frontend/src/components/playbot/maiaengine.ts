@@ -357,5 +357,5 @@ export class MaiaEngine {
 }
 
 export function getMaiaModelUrl(): string {
-    return 'https://nwvqnfxvnaeuci85.public.blob.vercel-storage.com/maia_rapid.onnx';
+    return '/static/engine/maia2/maia_rapid.onnx';
 }
