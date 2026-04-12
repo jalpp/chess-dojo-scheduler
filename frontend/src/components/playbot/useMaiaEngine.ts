@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getMaiaModelUrl, MaiaEngine, MaiaEvalResult, MaiaStatus } from './maiaengine';
 
-export type { MaiaStatus, MaiaEvalResult };
+export type { MaiaEvalResult, MaiaStatus };
 
 export interface UseMaiaEngineResult {
     /** Current lifecycle status of the engine */

@@ -1,6 +1,6 @@
 'use client';
 
-import { Chess} from '@jackstenglein/chess';
+import { Chess } from '@jackstenglein/chess';
 import { MaiaRating } from './maiaengine';
 export type PlayerColor = 'white' | 'black';
 
@@ -33,7 +33,10 @@ export interface UsePlayBotGameResult {
     maiaWinProb: number | null;
     startFen: string;
     onPlayerMove: (from: string, to: string, promotion?: string) => void;
-    newGame: (opts: { playerColor: PlayerColor; maiaRating: MaiaRating; startFen?: string }) => void;
+    newGame: (opts: {
+        playerColor: PlayerColor;
+        maiaRating: MaiaRating;
+        startFen?: string;
+    }) => void;
     resign: () => void;
 }
-

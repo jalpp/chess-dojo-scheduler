@@ -1,31 +1,11 @@
 'use client';
 
-import {
-    Add,
-    EmojiEvents,
-    Flag,
-    Handshake,
-    SaveOutlined,
-    SmartToy,
-} from '@mui/icons-material';
-import {
-    Box,
-    Button,
-    Chip,
-    Divider,
-    Stack,
-    Tooltip,
-    Typography,
-} from '@mui/material';
-import { MaiaRating } from './maiaengine';
-import {
-    GameOverReason,
-    GameResult,
-    PlayerColor,
-    UseMaiaGameResult,
-} from './useMaiaGame';
+import { Add, EmojiEvents, Flag, Handshake, SaveOutlined, SmartToy } from '@mui/icons-material';
+import { Box, Button, Chip, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { useState } from 'react';
+import { MaiaRating } from './maiaengine';
 import { SaveMaiaGameDialog } from './SaveGameDialog';
+import { GameOverReason, GameResult, PlayerColor, UseMaiaGameResult } from './useMaiaGame';
 
 function formatClock(ms: number | null): string {
     if (ms === null) return '∞';
@@ -67,9 +47,7 @@ function ClockDisplay({ ms, isActive, isLow, label }: ClockDisplayProps) {
                 borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: isActive ? 'primary.main' : 'divider',
-                bgcolor: isActive
-                    ? isLow ? 'error.main' : 'action.selected'
-                    : 'transparent',
+                bgcolor: isActive ? (isLow ? 'error.main' : 'action.selected') : 'transparent',
                 transition: 'all 0.2s ease',
             }}
         >
@@ -93,11 +71,10 @@ function ClockDisplay({ ms, isActive, isLow, label }: ClockDisplayProps) {
     );
 }
 
-
-
-
 function ResultBanner({
-    result, reason, playerColor,
+    result,
+    reason,
+    playerColor,
 }: {
     result: GameResult;
     reason: GameOverReason;
@@ -110,19 +87,34 @@ function ResultBanner({
     const headline = isDraw
         ? `Draw — ${reasonLabel}`
         : playerWon
-            ? `You Win!${reason === 'checkmate' ? ' — Checkmate' : reason === 'timeout' ? ' — Time Out' : ''}`
-            : `Maia Wins${reason === 'checkmate' ? ' — Checkmate' : reason === 'resign' ? ' — You Resigned' : reason === 'timeout' ? ' — Time Out' : ''}`;
+          ? `You Win!${reason === 'checkmate' ? ' — Checkmate' : reason === 'timeout' ? ' — Time Out' : ''}`
+          : `Maia Wins${reason === 'checkmate' ? ' — Checkmate' : reason === 'resign' ? ' — You Resigned' : reason === 'timeout' ? ' — Time Out' : ''}`;
     const color = isDraw ? 'info' : playerWon ? 'success' : 'error';
     return (
-        <Stack direction='row' alignItems='center' spacing={1} sx={{
-            p: 1, borderRadius: 1, bgcolor: `${color}.main`, color: 'white',
-        }}>
-            {isDraw ? <Handshake fontSize='small' /> : playerWon ? <EmojiEvents fontSize='small' /> : <SmartToy fontSize='small' />}
-            <Typography variant='body2' fontWeight='bold'>{headline}</Typography>
+        <Stack
+            direction='row'
+            alignItems='center'
+            spacing={1}
+            sx={{
+                p: 1,
+                borderRadius: 1,
+                bgcolor: `${color}.main`,
+                color: 'white',
+            }}
+        >
+            {isDraw ? (
+                <Handshake fontSize='small' />
+            ) : playerWon ? (
+                <EmojiEvents fontSize='small' />
+            ) : (
+                <SmartToy fontSize='small' />
+            )}
+            <Typography variant='body2' fontWeight='bold'>
+                {headline}
+            </Typography>
         </Stack>
     );
 }
-
 
 interface PlayBotControlsProps {
     game: UseMaiaGameResult;
@@ -132,9 +124,16 @@ interface PlayBotControlsProps {
 
 export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControlsProps) {
     const {
-        moves, playerColor, playerToMove, botThinking,
-        result, reason, resign, startFen,
-        clock, timeControl,
+        moves,
+        playerColor,
+        playerToMove,
+        botThinking,
+        result,
+        reason,
+        resign,
+        startFen,
+        clock,
+        timeControl,
     } = game;
 
     const [saveOpen, setSaveOpen] = useState(false);
@@ -158,7 +157,9 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
             {/* Maia identity */}
             <Stack direction='row' alignItems='center' spacing={1} flexWrap='wrap' gap={0.5}>
                 <SmartToy color='primary' fontSize='small' />
-                <Typography variant='subtitle2' fontWeight='bold'>Maia</Typography>
+                <Typography variant='subtitle2' fontWeight='bold'>
+                    Maia
+                </Typography>
                 <Chip label={maiaRating} size='small' color='primary' variant='outlined' />
                 {isTimed && timeControl.initialMs !== null && (
                     <Chip
@@ -169,8 +170,11 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                     />
                 )}
                 <Tooltip title='Plays like a real human at this rating — not a weakened engine'>
-                    <Typography variant='caption' color='text.secondary'
-                        sx={{ cursor: 'help', textDecoration: 'underline dotted' }}>
+                    <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ cursor: 'help', textDecoration: 'underline dotted' }}
+                    >
                         human-like AI
                     </Typography>
                 </Tooltip>
@@ -189,12 +193,17 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
             )}
 
             {/* Result or status */}
-            {gameOver
-                ? <ResultBanner result={result} reason={reason} playerColor={playerColor} />
-                : <Typography variant='caption' color='text.secondary' minHeight={18}>
-                    {botThinking ? 'Maia is thinking…' : playerToMove ? 'Your move' : 'Waiting for Maia…'}
+            {gameOver ? (
+                <ResultBanner result={result} reason={reason} playerColor={playerColor} />
+            ) : (
+                <Typography variant='caption' color='text.secondary' minHeight={18}>
+                    {botThinking
+                        ? 'Maia is thinking…'
+                        : playerToMove
+                          ? 'Your move'
+                          : 'Waiting for Maia…'}
                 </Typography>
-            }
+            )}
 
             <Box sx={{ flex: 1 }} />
 
@@ -212,12 +221,25 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
 
             {/* Actions */}
             <Stack spacing={1}>
-                <Button variant='contained' startIcon={<Add />} onClick={onNewGame} fullWidth size='small'>
+                <Button
+                    variant='contained'
+                    startIcon={<Add />}
+                    onClick={onNewGame}
+                    fullWidth
+                    size='small'
+                >
                     New Game
                 </Button>
                 {!gameOver && (
-                    <Button variant='outlined' color='error' startIcon={<Flag />}
-                        onClick={resign} disabled={!canResign} fullWidth size='small'>
+                    <Button
+                        variant='outlined'
+                        color='error'
+                        startIcon={<Flag />}
+                        onClick={resign}
+                        disabled={!canResign}
+                        fullWidth
+                        size='small'
+                    >
                         Resign
                     </Button>
                 )}

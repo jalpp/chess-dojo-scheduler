@@ -5,19 +5,17 @@
  *
  */
 
+import { logger } from '@/logging/logger';
 import { objectStorage } from '@/stockfish/engine/objectStorage';
 import allMovesDict from './data/all_moves.json';
 import allMovesReversedDict from './data/all_moves_reversed.json';
-import { logger } from '@/logging/logger';
 
 const ALL_MOVES = allMovesDict as Record<string, number>;
 const ALL_MOVES_REVERSED = allMovesReversedDict as Record<string, string>;
 
 export type MaiaRating = 1100 | 1200 | 1300 | 1400 | 1500 | 1600 | 1700 | 1800 | 1900;
 
-export const MAIA_RATINGS: MaiaRating[] = [
-    1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900,
-];
+export const MAIA_RATINGS: MaiaRating[] = [1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900];
 
 export type MaiaStatus = 'idle' | 'loading' | 'no-cache' | 'downloading' | 'ready' | 'error';
 
@@ -26,8 +24,6 @@ export interface MaiaEvalResult {
     policy: Record<string, number>;
     value: number;
 }
-
-
 
 function createEloDict(): Record<string, number> {
     const interval = 100;
@@ -101,8 +97,6 @@ function mirrorFEN(fen: string): string {
     return `${mirroredPosition} ${activeColor === 'w' ? 'b' : 'w'} ${swapCastlingRights(castling)} ${mirroredEp} ${halfmove} ${fullmove}`;
 }
 
-
-
 const PIECE_TYPES = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'];
 
 function boardToTensor(fen: string): Float32Array {
@@ -156,8 +150,6 @@ function boardToTensor(fen: string): Float32Array {
     return tensor;
 }
 
-
-
 async function getLegalMovesTensor(fen: string): Promise<Float32Array> {
     const { Chess } = await import('@jackstenglein/chess');
     const chess = new Chess({ fen });
@@ -173,7 +165,6 @@ async function getLegalMovesTensor(fen: string): Promise<Float32Array> {
     }
     return tensor;
 }
-
 
 const IDB_STORE = 'MaiaModel';
 const IDB_KEY = 'maia2-rapid';
@@ -199,8 +190,6 @@ async function writeModelToCache(buffer: ArrayBuffer): Promise<void> {
     }
 }
 
-
-
 interface OnnxTensor {
     data: ArrayLike<number>;
 }
@@ -211,11 +200,9 @@ function processOutputs(
     legalMoves: Float32Array,
     isBlack: boolean,
 ): MaiaEvalResult {
-   
-    let winProb = Math.min(Math.max((logitsValue.data[0]) / 2 + 0.5, 0), 1);
+    let winProb = Math.min(Math.max(logitsValue.data[0] / 2 + 0.5, 0), 1);
     if (isBlack) winProb = 1 - winProb;
     winProb = Math.round(winProb * 10000) / 10000;
-
 
     const legalMoveIndices = Array.from(legalMoves)
         .map((v, i) => (v > 0 ? i : -1))
@@ -231,15 +218,12 @@ function processOutputs(
         return move;
     });
 
-
     const legalLogits = legalMoveIndices.map((idx) => logitsMaia.data[idx]);
-
 
     const maxLogit = Math.max(...legalLogits);
     const expLogits = legalLogits.map((l) => Math.exp(l - maxLogit));
     const sumExp = expLogits.reduce((a, b) => a + b, 0);
     const probs = expLogits.map((e) => e / sumExp);
-
 
     const moveProbs: Record<string, number> = {};
     for (let i = 0; i < legalMovesMirrored.length; i++) {
@@ -307,20 +291,26 @@ export class MaiaEngine {
             let received = 0;
             let lastPct = 0;
 
-            for (; ;) {
+            for (;;) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
                 received += value.length;
                 if (contentLength > 0) {
                     const pct = Math.floor((received / contentLength) * 100);
-                    if (pct >= lastPct + 5) { this.onProgress(pct); lastPct = pct; }
+                    if (pct >= lastPct + 5) {
+                        this.onProgress(pct);
+                        lastPct = pct;
+                    }
                 }
             }
 
             const buffer = new Uint8Array(received);
             let pos = 0;
-            for (const chunk of chunks) { buffer.set(chunk, pos); pos += chunk.length; }
+            for (const chunk of chunks) {
+                buffer.set(chunk, pos);
+                pos += chunk.length;
+            }
 
             await writeModelToCache(buffer.buffer);
             await this.createSession(buffer.buffer);
@@ -359,14 +349,12 @@ export class MaiaEngine {
             elo_oppo: new Tensor('int64', BigInt64Array.from([BigInt(eloOppoCat)])),
         };
 
-
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const { logits_maia, logits_value } = await this.session.run(feeds);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return processOutputs(logits_maia, logits_value, legalMoves, isBlack);
     }
 }
-
 
 export function getMaiaModelUrl(): string {
     return 'https://nwvqnfxvnaeuci85.public.blob.vercel-storage.com/maia_rapid.onnx';

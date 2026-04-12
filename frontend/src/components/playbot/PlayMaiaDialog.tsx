@@ -1,7 +1,7 @@
 'use client';
 
-
-import { MAIA_RATINGS, MaiaRating } from './maiaengine';
+import { useRouter } from '@/hooks/useRouter';
+import { PlayArrow, SmartToy } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -16,9 +16,8 @@ import {
     Stack,
     Typography,
 } from '@mui/material';
-import { PlayArrow, SmartToy } from '@mui/icons-material';
 import { useState } from 'react';
-import { useRouter } from '@/hooks/useRouter';
+import { MAIA_RATINGS, MaiaRating } from './maiaengine';
 
 interface PlayMaiaDialogProps {
     open: boolean;
@@ -99,11 +98,17 @@ export function PlayMaiaDialog({
                             label={`Play as ${playerColor}`}
                             variant='outlined'
                             icon={
-                                <Box sx={{
-                                    width: 10, height: 10, borderRadius: '50%', ml: '6px !important',
-                                    bgcolor: playerColor === 'white' ? 'white' : 'grey.700',
-                                    border: '1px solid', borderColor: 'divider',
-                                }} />
+                                <Box
+                                    sx={{
+                                        width: 10,
+                                        height: 10,
+                                        borderRadius: '50%',
+                                        ml: '6px !important',
+                                        bgcolor: playerColor === 'white' ? 'white' : 'grey.700',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                    }}
+                                />
                             }
                         />
                     </Stack>
@@ -124,21 +129,31 @@ export function PlayMaiaDialog({
                             {MAIA_RATINGS.map((r) => (
                                 <MenuItem key={r} value={r}>
                                     <Stack direction='row' alignItems='center' spacing={1.5}>
-                                        <Chip label={r} size='small' color='primary' sx={{ minWidth: 48 }} />
-                                        <Typography variant='body2'>{RATING_DESCRIPTIONS[r]}</Typography>
+                                        <Chip
+                                            label={r}
+                                            size='small'
+                                            color='primary'
+                                            sx={{ minWidth: 48 }}
+                                        />
+                                        <Typography variant='body2'>
+                                            {RATING_DESCRIPTIONS[r]}
+                                        </Typography>
                                     </Stack>
                                 </MenuItem>
                             ))}
                         </Select>
                         <Typography variant='caption' color='text.secondary'>
-                            Maia plays like a real human at this rating level — not a weakened engine.
+                            Maia plays like a real human at this rating level — not a weakened
+                            engine.
                         </Typography>
                     </Stack>
                 </Stack>
             </DialogContent>
 
             <DialogActions sx={{ px: 3, pb: 2 }}>
-                <Button onClick={onClose} color='inherit'>Cancel</Button>
+                <Button onClick={onClose} color='inherit'>
+                    Cancel
+                </Button>
                 <Button variant='contained' startIcon={<PlayArrow />} onClick={handleStart}>
                     Start Match
                 </Button>

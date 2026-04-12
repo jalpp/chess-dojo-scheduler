@@ -8,6 +8,7 @@
  * After download it is stored in IndexedDB so subsequent visits are instant.
  */
 
+import { Download, SmartToy } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -19,7 +20,6 @@ import {
     Stack,
     Typography,
 } from '@mui/material';
-import { Download, SmartToy } from '@mui/icons-material';
 import { MaiaStatus } from './useMaiaEngine';
 
 interface MaiaDownloadModalProps {
@@ -82,9 +82,7 @@ export function MaiaDownloadModal({
                         </Stack>
                     ) : error ? (
                         <Stack spacing={2}>
-                            <Typography color='error'>
-                                Failed to load Maia: {error}
-                            </Typography>
+                            <Typography color='error'>Failed to load Maia: {error}</Typography>
                             <Button
                                 variant='contained'
                                 startIcon={<Download />}
@@ -96,13 +94,13 @@ export function MaiaDownloadModal({
                     ) : (
                         <Stack spacing={2}>
                             <Typography>
-                                <strong>Maia</strong> is a human-like chess AI, It predicts the moves real players make at
-                                each rating level, making it a uniquely challenging and instructive
-                                sparring partner.
+                                <strong>Maia</strong> is a human-like chess AI, It predicts the
+                                moves real players make at each rating level, making it a uniquely
+                                challenging and instructive sparring partner.
                             </Typography>
                             <Typography color='text.secondary' variant='body2'>
-                                The neural network model (~90 MB) needs to be downloaded once.
-                                It runs entirely in your browser — no server required.
+                                The neural network model (~90 MB) needs to be downloaded once. It
+                                runs entirely in your browser — no server required.
                             </Typography>
                             <Button
                                 variant='contained'

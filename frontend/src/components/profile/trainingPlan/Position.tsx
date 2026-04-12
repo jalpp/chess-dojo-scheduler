@@ -227,7 +227,6 @@ const Position = ({ position, orientation }: PositionProps) => {
                 </Menu>
             </CardActions>
 
-
             <PlayMaiaDialog
                 open={playMaiaOpen}
                 onClose={() => setPlayMaiaOpen(false)}

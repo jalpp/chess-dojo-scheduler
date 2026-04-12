@@ -1,19 +1,13 @@
 'use client';
 
-import Board, {
-    BoardApi,
-    PrimitiveMove,
-    toColor,
-    toDests,
-} from '@/board/Board';
+import Board, { BoardApi, PrimitiveMove, toColor, toDests } from '@/board/Board';
 import { ChessContext } from '@/board/pgn/PgnBoard';
 import { Chess } from '@jackstenglein/chess';
-import { Box, CircularProgress, Stack, Tooltip, Typography } from '@mui/material';
 import { SmartToy } from '@mui/icons-material';
+import { Box, CircularProgress, Stack, Tooltip, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MaiaRating } from './maiaengine';
 import { UsePlayBotGameResult } from './playbot';
-
 
 interface PlayBotBoardProps {
     game: UsePlayBotGameResult;
@@ -37,7 +31,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
         },
         [onPlayerMove, previewOnly],
     );
-
 
     const onInitialize = useCallback(
         (board: BoardApi, _chess: Chess, _boardRef: React.RefObject<HTMLDivElement | null>) => {
@@ -70,7 +63,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
             premovable: { enabled: false },
         });
     }, [chess, moves, playerToMove, result, orientation, previewOnly]);
-
 
     useEffect(() => {
         const board = boardApiRef.current;
@@ -147,7 +139,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
         </ChessContext.Provider>
     );
 }
-
 
 interface PlayerHeaderProps {
     label: string;

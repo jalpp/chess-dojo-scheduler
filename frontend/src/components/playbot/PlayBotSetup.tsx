@@ -1,7 +1,7 @@
 'use client';
 
-import { MAIA_RATINGS, MaiaRating } from './maiaengine';
-import { PlayerColor } from './useMaiaGame';
+import { Chess, FEN } from '@jackstenglein/chess';
+import { ExpandLess, ExpandMore, PlayArrow, Timer } from '@mui/icons-material';
 import {
     Alert,
     Box,
@@ -20,9 +20,9 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { PlayArrow, ExpandMore, ExpandLess, Timer} from '@mui/icons-material';
 import { useState } from 'react';
-import { Chess, FEN } from '@jackstenglein/chess';
+import { MAIA_RATINGS, MaiaRating } from './maiaengine';
+import { PlayerColor } from './useMaiaGame';
 
 type ColorChoice = PlayerColor | 'random';
 
@@ -124,16 +124,14 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
             if (mins === 0 && inc === 0) return { initialMs: null, incrementMs: 0 };
             return { initialMs: mins * 60 * 1000, incrementMs: inc * 1000 };
         }
-        const preset = TIME_PRESETS.find(p => p.label === selectedTime);
+        const preset = TIME_PRESETS.find((p) => p.label === selectedTime);
         if (!preset) return { initialMs: null, incrementMs: 0 };
         return { initialMs: preset.mins * 60 * 1000, incrementMs: preset.inc * 1000 };
     };
 
     const handleStart = () => {
         const playerColor: PlayerColor =
-            colorChoice === 'random'
-                ? Math.random() < 0.5 ? 'white' : 'black'
-                : colorChoice;
+            colorChoice === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : colorChoice;
 
         const trimmed = fenInput.trim();
         if (trimmed && !isValidFen(trimmed)) {
@@ -165,8 +163,15 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                         {MAIA_RATINGS.map((r) => (
                             <MenuItem key={r} value={r}>
                                 <Stack direction='row' alignItems='center' spacing={1.5}>
-                                    <Chip label={r} size='small' color='primary' sx={{ minWidth: 48 }} />
-                                    <Typography variant='body2'>{RATING_DESCRIPTIONS[r]}</Typography>
+                                    <Chip
+                                        label={r}
+                                        size='small'
+                                        color='primary'
+                                        sx={{ minWidth: 48 }}
+                                    />
+                                    <Typography variant='body2'>
+                                        {RATING_DESCRIPTIONS[r]}
+                                    </Typography>
                                 </Stack>
                             </MenuItem>
                         ))}
@@ -210,12 +215,19 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                                 sx={{
                                     cursor: 'pointer',
                                     borderColor: CATEGORY_COLORS[preset.category],
-                                    color: selectedTime === preset.label ? 'white' : CATEGORY_COLORS[preset.category],
-                                    bgcolor: selectedTime === preset.label ? CATEGORY_COLORS[preset.category] : 'transparent',
-                                    '&:hover': {
-                                        bgcolor: selectedTime === preset.label
+                                    color:
+                                        selectedTime === preset.label
+                                            ? 'white'
+                                            : CATEGORY_COLORS[preset.category],
+                                    bgcolor:
+                                        selectedTime === preset.label
                                             ? CATEGORY_COLORS[preset.category]
-                                            : `${CATEGORY_COLORS[preset.category]}22`,
+                                            : 'transparent',
+                                    '&:hover': {
+                                        bgcolor:
+                                            selectedTime === preset.label
+                                                ? CATEGORY_COLORS[preset.category]
+                                                : `${CATEGORY_COLORS[preset.category]}22`,
                                     },
                                 }}
                             />
@@ -261,7 +273,12 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                         />
                     </Stack>
                     {selectedTime === 'custom' && customMinsNum === 0 && customIncNum === 0 && (
-                        <Typography variant='caption' color='text.secondary' mt={0.5} display='block'>
+                        <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            mt={0.5}
+                            display='block'
+                        >
                             Both 0 → Unlimited
                         </Typography>
                     )}
@@ -271,8 +288,12 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                 <Stack direction='row' flexWrap='wrap' gap={1} mt={0.25}>
                     {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
                         <Stack key={cat} direction='row' alignItems='center' spacing={0.4}>
-                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
-                            <Typography variant='caption' color='text.secondary'>{cat}</Typography>
+                            <Box
+                                sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }}
+                            />
+                            <Typography variant='caption' color='text.secondary'>
+                                {cat}
+                            </Typography>
                         </Stack>
                     ))}
                 </Stack>
@@ -288,29 +309,47 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                 <ToggleButtonGroup
                     value={colorChoice}
                     exclusive
-                    onChange={(_, v) => { if (v) setColorChoice(v as ColorChoice); }}
+                    onChange={(_, v) => {
+                        if (v) setColorChoice(v as ColorChoice);
+                    }}
                     size='small'
                     fullWidth
                 >
                     <Tooltip title='Play with the White pieces'>
                         <ToggleButton value='white' sx={{ gap: 0.75, flex: 1 }}>
-                            <Box sx={{
-                                width: 14, height: 14, borderRadius: '50%',
-                                bgcolor: 'white', border: '1.5px solid', borderColor: 'divider', flexShrink: 0,
-                            }} />
+                            <Box
+                                sx={{
+                                    width: 14,
+                                    height: 14,
+                                    borderRadius: '50%',
+                                    bgcolor: 'white',
+                                    border: '1.5px solid',
+                                    borderColor: 'divider',
+                                    flexShrink: 0,
+                                }}
+                            />
                             White
                         </ToggleButton>
                     </Tooltip>
                     <Tooltip title='Play with the Black pieces'>
                         <ToggleButton value='black' sx={{ gap: 0.75, flex: 1 }}>
-                            <Box sx={{
-                                width: 14, height: 14, borderRadius: '50%',
-                                bgcolor: 'grey.700', border: '1.5px solid', borderColor: 'divider', flexShrink: 0,
-                            }} />
+                            <Box
+                                sx={{
+                                    width: 14,
+                                    height: 14,
+                                    borderRadius: '50%',
+                                    bgcolor: 'grey.700',
+                                    border: '1.5px solid',
+                                    borderColor: 'divider',
+                                    flexShrink: 0,
+                                }}
+                            />
                             Black
                         </ToggleButton>
                     </Tooltip>
-                    <ToggleButton value='random' sx={{ flex: 1 }}>Random</ToggleButton>
+                    <ToggleButton value='random' sx={{ flex: 1 }}>
+                        Random
+                    </ToggleButton>
                 </ToggleButtonGroup>
             </Stack>
 
@@ -324,7 +363,12 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                     color='inherit'
                     onClick={() => setShowFen((v) => !v)}
                     endIcon={showFen ? <ExpandLess /> : <ExpandMore />}
-                    sx={{ alignSelf: 'flex-start', px: 0, color: 'text.secondary', textTransform: 'none' }}
+                    sx={{
+                        alignSelf: 'flex-start',
+                        px: 0,
+                        color: 'text.secondary',
+                        textTransform: 'none',
+                    }}
                 >
                     <Typography variant='subtitle2' fontWeight='bold'>
                         CUSTOM POSITION (FEN)
@@ -339,7 +383,9 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                             value={fenInput}
                             onChange={(e) => handleFenChange(e.target.value)}
                             error={!!fenError}
-                            helperText={fenError || 'Leave blank to start from the initial position'}
+                            helperText={
+                                fenError || 'Leave blank to start from the initial position'
+                            }
                             inputProps={{ style: { fontFamily: 'monospace', fontSize: '0.75rem' } }}
                         />
                         {fenInput.trim() && !fenError && (
@@ -352,7 +398,10 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                                 size='small'
                                 variant='text'
                                 color='inherit'
-                                onClick={() => { setFenInput(''); setFenError(''); }}
+                                onClick={() => {
+                                    setFenInput('');
+                                    setFenError('');
+                                }}
                                 sx={{ alignSelf: 'flex-start', px: 0, color: 'text.secondary' }}
                             >
                                 Clear

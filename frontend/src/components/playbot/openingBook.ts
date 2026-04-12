@@ -13,14 +13,13 @@
  *     well within the 60 RPM free tier
  */
 
-import { MaiaRating } from './maiaengine';
 import { axiosService } from '../../api/axiosService';
+import { MaiaRating } from './maiaengine';
 
 /** Stop using the opening book after this many half-moves (plies) */
 export const OPENING_PLY_LIMIT = 20;
 
 const POSIRA_BASE = 'https://api.posira.dev/api/v1/explorer';
-
 
 /**
  * Rating bracket mapping
@@ -28,7 +27,6 @@ const POSIRA_BASE = 'https://api.posira.dev/api/v1/explorer';
  * We map each Maia rating to the most representative bracket(s).
  * Using two adjacent brackets broadens the sample while keeping it realistic.
  */
-
 
 const MAIA_TO_POSIRA_RATINGS: Record<MaiaRating, string> = {
     1100: '1000',
@@ -41,7 +39,6 @@ const MAIA_TO_POSIRA_RATINGS: Record<MaiaRating, string> = {
     1800: '1800',
     1900: '1800,2000',
 };
-
 
 interface PosiraMove {
     san: string;
@@ -79,7 +76,6 @@ function weightedRandomMove(moves: PosiraMove[]): PosiraMove | null {
     return filtered[filtered.length - 1];
 }
 
-
 export interface OpeningBookResult {
     uci: string;
     san: string;
@@ -99,7 +95,6 @@ export async function getOpeningBookMove(
     maiaRating: MaiaRating,
     plyCount: number,
 ): Promise<OpeningBookResult | null> {
-
     if (plyCount >= OPENING_PLY_LIMIT) return null;
 
     const ratings = MAIA_TO_POSIRA_RATINGS[maiaRating];

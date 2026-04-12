@@ -13,15 +13,16 @@
  * After save → navigates to the new game page.
  */
 
+import { EventType, trackEvent } from '@/analytics/events';
 import { useApi } from '@/api/Api';
 import { isGame } from '@/api/gameApi';
-import { useRequest, RequestSnackbar } from '@/api/Request';
+import { RequestSnackbar, useRequest } from '@/api/Request';
 import { useAuth } from '@/auth/Auth';
 import { DirectorySelectButton } from '@/components/directories/select/DirectorySelectButton';
 import { DirectoryCacheProvider } from '@/components/profile/directories/DirectoryCache';
-import { useRouter } from '@/hooks/useRouter';
-import { EventType, trackEvent } from '@/analytics/events';
 import { GameResult } from '@/database/game';
+import { useRouter } from '@/hooks/useRouter';
+import { FEN } from '@jackstenglein/chess';
 import { MY_GAMES_DIRECTORY_ID } from '@jackstenglein/chess-dojo-common/src/database/directory';
 import { GameImportTypes } from '@jackstenglein/chess-dojo-common/src/database/game';
 import { SaveOutlined } from '@mui/icons-material';
@@ -42,8 +43,6 @@ import { DateTime } from 'luxon';
 import { useState } from 'react';
 import { MaiaRating } from './maiaengine';
 import { GameResult as BotGameResult, MoveRecord, PlayerColor } from './useMaiaGame';
-import { FEN } from '@jackstenglein/chess';
-
 
 function buildResultTag(result: BotGameResult): string {
     if (result === 'white') return GameResult.White;
@@ -75,7 +74,6 @@ function buildPgn(opts: {
         ...(isCustomStart ? [`[SetUp "1"]`, `[FEN "${startFen}"]`] : []),
     ].join('\n');
 
-  
     const moveParts: string[] = [];
     for (let i = 0; i < moves.length; i++) {
         const moveNum = Math.floor(i / 2) + 1;
@@ -126,7 +124,15 @@ export function SaveMaiaGameDialog({
     const [addToFolder, setAddToFolder] = useState(true);
     const [selectedBtn, setSelectedBtn] = useState<'save' | 'publish' | ''>('');
 
-    const pgn = buildPgn({ whiteName, blackName, result, startFen, moves, playerColor, maiaRating });
+    const pgn = buildPgn({
+        whiteName,
+        blackName,
+        result,
+        startFen,
+        moves,
+        playerColor,
+        maiaRating,
+    });
 
     const handleSave = async (publish: boolean) => {
         setSelectedBtn(publish ? 'publish' : 'save');
@@ -158,7 +164,12 @@ export function SaveMaiaGameDialog({
     const resultTag = buildResultTag(result);
 
     return (
-        <Dialog open={open} onClose={request.isLoading() ? undefined : onClose} maxWidth='xs' fullWidth>
+        <Dialog
+            open={open}
+            onClose={request.isLoading() ? undefined : onClose}
+            maxWidth='xs'
+            fullWidth
+        >
             <RequestSnackbar request={request} />
 
             <DialogTitle>
@@ -178,15 +189,23 @@ export function SaveMaiaGameDialog({
                         sx={{ px: 1, py: 0.75, bgcolor: 'action.hover', borderRadius: 1 }}
                     >
                         <Stack>
-                            <Typography variant='body2' fontWeight={600}>{whiteName}</Typography>
-                            <Typography variant='caption' color='text.secondary'>White</Typography>
+                            <Typography variant='body2' fontWeight={600}>
+                                {whiteName}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                                White
+                            </Typography>
                         </Stack>
                         <Typography variant='h6' fontWeight={700} color='text.secondary'>
                             {resultTag}
                         </Typography>
                         <Stack alignItems='flex-end'>
-                            <Typography variant='body2' fontWeight={600}>{blackName}</Typography>
-                            <Typography variant='caption' color='text.secondary'>Black</Typography>
+                            <Typography variant='body2' fontWeight={600}>
+                                {blackName}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                                Black
+                            </Typography>
                         </Stack>
                     </Stack>
 
@@ -201,9 +220,7 @@ export function SaveMaiaGameDialog({
                                     size='small'
                                 />
                             }
-                            label={
-                                <Typography variant='body2'>Add to folder</Typography>
-                            }
+                            label={<Typography variant='body2'>Add to folder</Typography>}
                         />
                         <DirectoryCacheProvider>
                             <DirectorySelectButton

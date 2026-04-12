@@ -1,20 +1,20 @@
 'use client';
 
-import PgnBoard, { PgnBoardApi } from '@/board/pgn/PgnBoard';
 import { BoardApi, PrimitiveMove, reconcile } from '@/board/Board';
 import { CustomUnderboardTab } from '@/board/pgn/boardTools/underboard/underboardTabs';
+import PgnBoard, { PgnBoardApi } from '@/board/pgn/PgnBoard';
+import { useNextSearchParams } from '@/hooks/useNextSearchParams';
 import { Chess, FEN } from '@jackstenglein/chess';
 import { SmartToy } from '@mui/icons-material';
-import { Box} from '@mui/material';
+import { Box } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MaiaRating } from "./maiaengine";
 import { MaiaDownloadModal } from './MaiaDownloadModal';
-import { PlayBotStartOpts, PlayBotSetup, TimeControl } from './PlayBotSetup';
-import { PlayBotControls } from './PlayBotControls';
+import { MaiaRating } from './maiaengine';
 import { PlayBotAfterPgn } from './PlayBotAfterPgn';
+import { PlayBotControls } from './PlayBotControls';
+import { PlayBotSetup, PlayBotStartOpts, TimeControl } from './PlayBotSetup';
 import { useMaiaEngine } from './useMaiaEngine';
 import { useMaiaGame } from './useMaiaGame';
-import { useNextSearchParams } from '@/hooks/useNextSearchParams';
 
 type PageView = 'setup' | 'playing';
 
@@ -35,15 +35,14 @@ function parseQueryOpts(searchParams: URLSearchParams): PlayBotStartOpts | null 
         incrementMs: inc * 1000,
     };
 
-    const playerColor: 'white' | 'black' =
-        colorStr === 'black' ? 'black' : 'white';
+    const playerColor: 'white' | 'black' = colorStr === 'black' ? 'black' : 'white';
 
     const ratingStr = searchParams.get('rating');
     const ratingNum = parseInt(ratingStr ?? '1500');
     const validRatings: MaiaRating[] = [1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900];
-    const maiaRating: MaiaRating = (validRatings.includes(ratingNum as MaiaRating)
-        ? ratingNum
-        : 1500) as MaiaRating;
+    const maiaRating: MaiaRating = (
+        validRatings.includes(ratingNum as MaiaRating) ? ratingNum : 1500
+    ) as MaiaRating;
 
     return {
         playerColor,
@@ -73,7 +72,6 @@ export function PlayBotPage() {
         engine.status === 'loading' ||
         engine.status === 'no-cache' ||
         engine.status === 'downloading';
-
 
     useEffect(() => {
         if (autoStartedRef.current) return;
@@ -169,8 +167,7 @@ export function PlayBotPage() {
                     alignItems: 'center',
                     gap: 1,
                 }}
-            >
-            </Box>
+            ></Box>
 
             <PgnBoard
                 ref={pgnBoardRef}
@@ -190,11 +187,7 @@ export function PlayBotPage() {
                 }}
                 slots={{
                     afterPgnText: (
-                        <PlayBotAfterPgn
-                            game={maiaGame}
-                            view={view}
-                            maiaRating={activeRating}
-                        />
+                        <PlayBotAfterPgn game={maiaGame} view={view} maiaRating={activeRating} />
                     ),
                 }}
                 onInitialize={onInitialize}

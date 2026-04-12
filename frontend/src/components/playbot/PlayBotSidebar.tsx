@@ -12,24 +12,8 @@
  *   - Action buttons: New Game / Resign / Analyze
  */
 
-import {
-    Add,
-    Analytics,
-    EmojiEvents,
-    Flag,
-    Handshake,
-    SmartToy,
-} from '@mui/icons-material';
-import {
-    Box,
-    Button,
-    Chip,
-    Divider,
-    Paper,
-    Stack,
-    Tooltip,
-    Typography,
-} from '@mui/material';
+import { Add, Analytics, EmojiEvents, Flag, Handshake, SmartToy } from '@mui/icons-material';
+import { Box, Button, Chip, Divider, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { useEffect, useRef } from 'react';
 import { MaiaRating } from './maiaengine';
 import {
@@ -39,7 +23,6 @@ import {
     PlayerColor,
     UsePlayBotGameResult,
 } from './playbot';
-
 
 const REASON_LABELS: Record<NonNullable<GameOverReason>, string> = {
     checkmate: 'Checkmate',
@@ -68,8 +51,8 @@ function ResultBanner({
     const headline = isDraw
         ? `Draw — ${reasonLabel}`
         : playerWon
-            ? `You Win!${reason === 'checkmate' ? ' — Checkmate' : ''}`
-            : `Maia Wins${reason === 'checkmate' ? ' — Checkmate' : reason === 'resign' ? ' — You Resigned' : ''}`;
+          ? `You Win!${reason === 'checkmate' ? ' — Checkmate' : ''}`
+          : `Maia Wins${reason === 'checkmate' ? ' — Checkmate' : reason === 'resign' ? ' — You Resigned' : ''}`;
 
     const color = isDraw ? 'default' : playerWon ? 'success' : 'error';
 
@@ -102,7 +85,6 @@ function ResultBanner({
         </Paper>
     );
 }
-
 
 function MoveList({ moves }: { moves: MoveRecord[] }) {
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -149,7 +131,11 @@ function MoveList({ moves }: { moves: MoveRecord[] }) {
                     <Typography
                         variant='caption'
                         color='text.disabled'
-                        sx={{ minWidth: 22, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                        sx={{
+                            minWidth: 22,
+                            textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                        }}
                     >
                         {pair.num}.
                     </Typography>
@@ -183,8 +169,7 @@ interface PlayBotSidebarProps {
 }
 
 export function PlayBotSidebar({ game, maiaRating, onNewGame }: PlayBotSidebarProps) {
-    const { moves, playerColor, playerToMove, botThinking, result, reason, resign } =
-        game;
+    const { moves, playerColor, playerToMove, botThinking, result, reason, resign } = game;
 
     const gameOver = result !== null;
     const canResign = !gameOver && moves.length >= 2;
@@ -227,12 +212,10 @@ export function PlayBotSidebar({ game, maiaRating, onNewGame }: PlayBotSidebarPr
                     {botThinking
                         ? 'Maia is thinking…'
                         : playerToMove
-                            ? 'Your move'
-                            : 'Waiting for Maia…'}
+                          ? 'Your move'
+                          : 'Waiting for Maia…'}
                 </Typography>
             )}
-
-
 
             <MoveList moves={moves} />
 
