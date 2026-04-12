@@ -262,6 +262,9 @@ type User struct {
 	// The user's preferred time format on the calendar
 	TimeFormat string `dynamodbav:"timeFormat" json:"timeFormat"`
 
+	// The user's preferred language for the UI (e.g. "de", "es"). Empty = English.
+	Language string `dynamodbav:"language,omitempty" json:"language,omitempty"`
+
 	// The user's list of custom tasks
 	CustomTasks []*CustomTask `dynamodbav:"customTasks" json:"customTasks"`
 
@@ -348,6 +351,9 @@ type User struct {
 	// A map from puzzle theme to the user's overview stats for that theme. The user's
 	// overall stats will be under the theme OVERALL.
 	Puzzles map[string]PuzzleThemeOverview `dynamodbav:"puzzles,omitempty" json:"puzzles,omitempty"`
+
+	// The user's best-ever square color drill rating (0-1500).
+	SquareColorRating float32 `dynamodbav:"squareColorRating,omitempty" json:"squareColorRating,omitempty"`
 
 	// The id of the user's game review cohort, if they are a member of the Game & Profile Review tier.
 	GameReviewCohortId string `dynamodbav:"gameReviewCohortId,omitempty" json:"gameReviewCohortId,omitempty"`
@@ -744,6 +750,9 @@ type UserUpdate struct {
 
 	// The user's preferred time format on the calendar
 	TimeFormat *string `dynamodbav:"timeFormat,omitempty" json:"timeFormat,omitempty"`
+
+	// The user's preferred language for the UI (e.g. "de", "es"). Empty = English.
+	Language *string `dynamodbav:"language,omitempty" json:"language,omitempty"`
 
 	// The user's list of custom tasks
 	CustomTasks *[]*CustomTask `dynamodbav:"customTasks,omitempty" json:"customTasks,omitempty"`

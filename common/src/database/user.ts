@@ -54,6 +54,9 @@ export interface User {
     timezoneOverride: string;
     timeFormat: TimeFormat;
 
+    /** The user's preferred language for the UI (e.g. "de", "es"). Empty/undefined = English. */
+    language?: string;
+
     hasCreatedProfile: boolean;
 
     customTasks?: CustomTask[];
@@ -117,6 +120,9 @@ export interface User {
      * The user's overall stats will be under the theme OVERALL.
      */
     puzzles?: Record<string, PuzzleThemeOverview>;
+
+    /** The user's best-ever square color drill rating (0-1500). */
+    squareColorRating?: number;
 
     /** The user's firebase cloud messaging tokens. */
     firebaseTokens?: string[];
@@ -258,6 +264,7 @@ export interface DiscordNotificationSettings {
     disableMeetingCancellation: boolean;
     disableCalendarInvite: boolean;
     disableRoundRobinStart: boolean;
+    disableGameReviewSubmitted?: boolean;
 }
 
 export interface EmailNotificationSettings {
