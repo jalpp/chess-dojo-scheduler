@@ -3,30 +3,15 @@
  *
  * Ported directly from github.com/CSSLab/maia-platform-frontend (GPL-3.0).
  *
- * Critical fix: move-index tables are loaded from the exact same JSON files
- * used by the Maia2 model (all_moves.json / all_moves_reversed.json), copied
- * verbatim from maia-platform-frontend/src/lib/engine/data/.
- * The programmatic generation we had before produced a different ordering
- * and wrong count (1880 actual vs our ~1968 estimate), causing garbage moves.
- *
- * Everything else — tensor encoding, FEN mirroring, ELO binning, ONNX session,
- * IndexedDB caching — mirrors tensor.ts and maia.ts from the source repo.
  */
 
 import { objectStorage } from '@/stockfish/engine/objectStorage';
 import allMovesDict from './data/all_moves.json';
 import allMovesReversedDict from './data/all_moves_reversed.json';
-
-// ---------------------------------------------------------------------------
-// Move-index tables — loaded from the exact Maia JSON files
-// ---------------------------------------------------------------------------
+import { logger } from '@/logging/logger';
 
 const ALL_MOVES = allMovesDict as Record<string, number>;
 const ALL_MOVES_REVERSED = allMovesReversedDict as Record<string, string>;
-
-// ---------------------------------------------------------------------------
-// Exported types
-// ---------------------------------------------------------------------------
 
 export type MaiaRating = 1100 | 1200 | 1300 | 1400 | 1500 | 1600 | 1700 | 1800 | 1900;
 
@@ -42,12 +27,7 @@ export interface MaiaEvalResult {
     value: number;
 }
 
-// ---------------------------------------------------------------------------
-// ELO binning
-//
-// Ported from tensor.ts createEloDict() + mapToCategory().
-// Bins: <1100 → 0, 1100-1199 → 1, …, 1900-1999 → 9, ≥2000 → 10
-// ---------------------------------------------------------------------------
+
 
 function createEloDict(): Record<string, number> {
     const interval = 100;
@@ -75,10 +55,6 @@ function eloToCategory(elo: number): number {
     }
     throw new Error('ELO out of range');
 }
-
-// ---------------------------------------------------------------------------
-// FEN mirroring — ported verbatim from tensor.ts mirrorFEN()
-// ---------------------------------------------------------------------------
 
 function mirrorSquare(square: string): string {
     return square.charAt(0) + String(9 - parseInt(square.charAt(1)));
@@ -125,11 +101,7 @@ function mirrorFEN(fen: string): string {
     return `${mirroredPosition} ${activeColor === 'w' ? 'b' : 'w'} ${swapCastlingRights(castling)} ${mirroredEp} ${halfmove} ${fullmove}`;
 }
 
-// ---------------------------------------------------------------------------
-// Board → float32 tensor [18 × 8 × 8]
-//
-// Ported verbatim from tensor.ts boardToTensor().
-// ---------------------------------------------------------------------------
+
 
 const PIECE_TYPES = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'];
 
@@ -184,13 +156,7 @@ function boardToTensor(fen: string): Float32Array {
     return tensor;
 }
 
-// ---------------------------------------------------------------------------
-// Legal moves tensor
-//
-// Ported from tensor.ts preprocess() — uses @jackstenglein/chess
-// (already in chess-dojo) instead of chess.ts.
-// The fork's Chess.moves() always returns verbose objects with .from/.to/.promotion.
-// ---------------------------------------------------------------------------
+
 
 async function getLegalMovesTensor(fen: string): Promise<Float32Array> {
     const { Chess } = await import('@jackstenglein/chess');
@@ -208,9 +174,6 @@ async function getLegalMovesTensor(fen: string): Promise<Float32Array> {
     return tensor;
 }
 
-// ---------------------------------------------------------------------------
-// IndexedDB caching — uses chess-dojo's objectStorage (same pattern as Stockfish17.ts)
-// ---------------------------------------------------------------------------
 
 const IDB_STORE = 'MaiaModel';
 const IDB_KEY = 'maia2-rapid';
@@ -219,7 +182,7 @@ async function readModelFromCache(): Promise<ArrayBuffer | null> {
     try {
         const store = await objectStorage<Blob, string>({ store: IDB_STORE });
         const blob = await store.get(IDB_KEY).catch(() => undefined);
-        return blob ? blob.arrayBuffer() : null;
+        return blob ? await blob.arrayBuffer() : null;
     } catch {
         return null;
     }
@@ -229,18 +192,14 @@ async function writeModelToCache(buffer: ArrayBuffer): Promise<void> {
     try {
         const store = await objectStorage<Blob, string>({ store: IDB_STORE });
         await store.put(IDB_KEY, new Blob([buffer])).catch(() => {
-            console.warn('[MaiaEngine] IndexedDB put failed (storage full?)');
+            logger.warn('[MaiaEngine] IndexedDB put failed (storage full?)');
         });
     } catch (e) {
-        console.warn('[MaiaEngine] Failed to open IDB store:', e);
+        logger.warn('[MaiaEngine] Failed to open IDB store:', e);
     }
 }
 
-// ---------------------------------------------------------------------------
-// Process ONNX outputs → MaiaEvalResult
-//
-// Ported from maia.ts processOutputs().
-// ---------------------------------------------------------------------------
+
 
 interface OnnxTensor {
     data: ArrayLike<number>;
@@ -252,12 +211,12 @@ function processOutputs(
     legalMoves: Float32Array,
     isBlack: boolean,
 ): MaiaEvalResult {
-    // Value: tanh-scaled, rescale to [0,1] win prob
-    let winProb = Math.min(Math.max((logitsValue.data[0] as number) / 2 + 0.5, 0), 1);
+   
+    let winProb = Math.min(Math.max((logitsValue.data[0]) / 2 + 0.5, 0), 1);
     if (isBlack) winProb = 1 - winProb;
     winProb = Math.round(winProb * 10000) / 10000;
 
-    // Get indices of legal moves
+
     const legalMoveIndices = Array.from(legalMoves)
         .map((v, i) => (v > 0 ? i : -1))
         .filter((i) => i !== -1);
@@ -266,29 +225,27 @@ function processOutputs(
         return { bestMove: '', policy: {}, value: winProb };
     }
 
-    // Mirror moves back if position was mirrored for black
     const legalMovesMirrored: string[] = legalMoveIndices.map((idx) => {
         let move = ALL_MOVES_REVERSED[String(idx)];
         if (isBlack) move = mirrorMove(move);
         return move;
     });
 
-    // Extract logits for legal moves
-    const legalLogits = legalMoveIndices.map((idx) => logitsMaia.data[idx] as number);
 
-    // Softmax over legal logits only
+    const legalLogits = legalMoveIndices.map((idx) => logitsMaia.data[idx]);
+
+
     const maxLogit = Math.max(...legalLogits);
     const expLogits = legalLogits.map((l) => Math.exp(l - maxLogit));
     const sumExp = expLogits.reduce((a, b) => a + b, 0);
     const probs = expLogits.map((e) => e / sumExp);
 
-    // Map probs to moves
+
     const moveProbs: Record<string, number> = {};
     for (let i = 0; i < legalMovesMirrored.length; i++) {
         moveProbs[legalMovesMirrored[i]] = probs[i];
     }
 
-    // Sort descending by probability (mirrors maia.ts behaviour)
     const sorted = Object.fromEntries(
         Object.keys(moveProbs)
             .sort((a, b) => moveProbs[b] - moveProbs[a])
@@ -297,10 +254,6 @@ function processOutputs(
 
     return { bestMove: Object.keys(sorted)[0], policy: sorted, value: winProb };
 }
-
-// ---------------------------------------------------------------------------
-// MaiaEngine class — mirrors maia.ts
-// ---------------------------------------------------------------------------
 
 export interface MaiaEngineOptions {
     modelUrl: string;
@@ -354,7 +307,7 @@ export class MaiaEngine {
             let received = 0;
             let lastPct = 0;
 
-            for (;;) {
+            for (; ;) {
                 const { done, value } = await reader.read();
                 if (done) break;
                 chunks.push(value);
@@ -392,8 +345,6 @@ export class MaiaEngine {
         const ort = await import('onnxruntime-web');
         const { Tensor } = ort;
 
-        // Mirror if black to move — model always evaluates from white's POV
-        // (matches tensor.ts preprocess() mirroring logic)
         const isBlack = fen.split(' ')[1] === 'b';
         const workFen = isBlack ? mirrorFEN(fen) : fen;
 
@@ -408,15 +359,15 @@ export class MaiaEngine {
             elo_oppo: new Tensor('int64', BigInt64Array.from([BigInt(eloOppoCat)])),
         };
 
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const { logits_maia, logits_value } = await this.session.run(feeds);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         return processOutputs(logits_maia, logits_value, legalMoves, isBlack);
     }
 }
 
-// ---------------------------------------------------------------------------
-// Model URL
-// ---------------------------------------------------------------------------
 
 export function getMaiaModelUrl(): string {
-    return 'https://raw.githubusercontent.com/CSSLab/maia-platform-frontend/e23a50e/public/maia2/maia_rapid.onnx';
+    return 'https://nwvqnfxvnaeuci85.public.blob.vercel-storage.com/maia_rapid.onnx';
 }

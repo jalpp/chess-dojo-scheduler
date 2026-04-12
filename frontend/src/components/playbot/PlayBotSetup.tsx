@@ -20,7 +20,7 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material';
-import { PlayArrow, ExpandMore, ExpandLess, Timer } from '@mui/icons-material';
+import { PlayArrow, ExpandMore, ExpandLess, Timer} from '@mui/icons-material';
 import { useState } from 'react';
 import { Chess, FEN } from '@jackstenglein/chess';
 
@@ -45,15 +45,15 @@ interface PlayBotSetupProps {
 }
 
 const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
-    1100: 'Very Beginner',
-    1200: 'Beginner',
-    1300: 'Casual',
+    1100: 'Beginner',
+    1200: 'Advanced Beginner',
+    1300: 'Intermediate',
     1400: 'Intermediate',
-    1500: 'Club Player',
-    1600: 'Strong Club',
-    1700: 'Tournament',
+    1500: 'Advanced Intermediate',
+    1600: 'Club Player',
+    1700: 'Strong Club Player',
     1800: 'Expert',
-    1900: 'Master Level',
+    1900: 'Advanced Expert',
 };
 
 interface TimePreset {
@@ -97,13 +97,10 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
     const [colorChoice, setColorChoice] = useState<ColorChoice>('white');
     const [maiaRating, setMaiaRating] = useState<MaiaRating>(initialRating);
 
-    // Time control state
-    // 'unlimited' | preset label | 'custom'
     const [selectedTime, setSelectedTime] = useState<string>('10+0');
     const [customMins, setCustomMins] = useState('10');
     const [customInc, setCustomInc] = useState('0');
 
-    // FEN state
     const [showFen, setShowFen] = useState(false);
     const [fenInput, setFenInput] = useState('');
     const [fenError, setFenError] = useState('');
@@ -157,12 +154,13 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
             {/* Rating */}
             <Stack spacing={0.75}>
                 <Typography variant='subtitle2' fontWeight='bold' color='text.secondary'>
-                    MAIA RATING
+                    Sparring Bot Rating
                 </Typography>
+
                 <FormControl size='small' fullWidth>
                     <Select
                         value={maiaRating}
-                        onChange={(e) => setMaiaRating(Number(e.target.value) as MaiaRating)}
+                        onChange={(e) => setMaiaRating(e.target.value as MaiaRating)}
                     >
                         {MAIA_RATINGS.map((r) => (
                             <MenuItem key={r} value={r}>
@@ -174,6 +172,9 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                         ))}
                     </Select>
                 </FormControl>
+                <Typography variant='caption' color='text.secondary'>
+                    Powered by Maia2 neural network by UofT
+                </Typography>
             </Stack>
 
             <Divider />
@@ -287,7 +288,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                 <ToggleButtonGroup
                     value={colorChoice}
                     exclusive
-                    onChange={(_, v) => { if (v) setColorChoice(v); }}
+                    onChange={(_, v) => { if (v) setColorChoice(v as ColorChoice); }}
                     size='small'
                     fullWidth
                 >
@@ -371,7 +372,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                 disabled={!!fenError || !customValid}
                 fullWidth
             >
-                Play vs Maia {maiaRating}
+                Play vs Dojo Sparring Bot {maiaRating}
             </Button>
         </Stack>
     );

@@ -38,13 +38,9 @@ import {
     MoveRecord,
     PlayerColor,
     UsePlayBotGameResult,
-} from './usePlayBotGame';
+} from './playbot';
 
-// ---------------------------------------------------------------------------
-// Result banner
-// ---------------------------------------------------------------------------
 
-// GameOverReason includes null but null can't be an object key; use NonNullable
 const REASON_LABELS: Record<NonNullable<GameOverReason>, string> = {
     checkmate: 'Checkmate',
     stalemate: 'Stalemate',
@@ -107,52 +103,6 @@ function ResultBanner({
     );
 }
 
-// ---------------------------------------------------------------------------
-// Win probability bar
-// ---------------------------------------------------------------------------
-
-function WinProbBar({ prob }: { prob: number | null }) {
-    if (prob === null) return null;
-
-    // prob is already normalised to white's perspective by usePlayBotGame
-    const whitePct = Math.round(prob * 100);
-    const blackPct = 100 - whitePct;
-
-    return (
-        <Stack spacing={0.5}>
-            <Stack direction='row' justifyContent='space-between'>
-                <Typography variant='caption' color='text.secondary'>
-                    Maia evaluation
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                    W {whitePct}% — B {blackPct}%
-                </Typography>
-            </Stack>
-            <Box
-                sx={{
-                    height: 6,
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    bgcolor: 'grey.800',
-                    display: 'flex',
-                }}
-            >
-                <Box
-                    sx={{
-                        height: '100%',
-                        width: `${whitePct}%`,
-                        bgcolor: 'grey.100',
-                        transition: 'width 0.35s ease',
-                    }}
-                />
-            </Box>
-        </Stack>
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Move list
-// ---------------------------------------------------------------------------
 
 function MoveList({ moves }: { moves: MoveRecord[] }) {
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -233,7 +183,7 @@ interface PlayBotSidebarProps {
 }
 
 export function PlayBotSidebar({ game, maiaRating, onNewGame }: PlayBotSidebarProps) {
-    const { moves, playerColor, playerToMove, botThinking, result, reason, maiaWinProb, resign } =
+    const { moves, playerColor, playerToMove, botThinking, result, reason, resign } =
         game;
 
     const gameOver = result !== null;
@@ -282,12 +232,8 @@ export function PlayBotSidebar({ game, maiaRating, onNewGame }: PlayBotSidebarPr
                 </Typography>
             )}
 
-            {/* Win probability */}
-            <WinProbBar prob={maiaWinProb} />
 
-            <Divider />
 
-            {/* Move list — fills remaining vertical space */}
             <MoveList moves={moves} />
 
             <Divider />

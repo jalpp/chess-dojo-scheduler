@@ -45,7 +45,7 @@ export function useMaiaEngine(): UseMaiaEngineResult {
             onError: setError,
         });
         engineRef.current = engine;
-        engine.initialize();
+        void engine.initialize();
     }, []);
 
     const downloadModel = useCallback(async () => {
@@ -57,7 +57,7 @@ export function useMaiaEngine(): UseMaiaEngineResult {
     const evaluate = useCallback(
         async (fen: string, eloSelf: number, eloOppo: number): Promise<MaiaEvalResult> => {
             if (!engineRef.current) throw new Error('Engine not initialized');
-            return engineRef.current.evaluate(fen, eloSelf, eloOppo);
+            return await engineRef.current.evaluate(fen, eloSelf, eloOppo);
         },
         [],
     );

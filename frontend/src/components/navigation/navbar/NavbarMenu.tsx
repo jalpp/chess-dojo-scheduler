@@ -157,7 +157,7 @@ function allStartItems(toggleExpansion: (item: string) => void): NavbarItem[] {
                 },
                 {
                     id: 'play-bot',
-                    name: 'Play vs Maia',
+                    name: 'Play Dojo Sparring Bot',
                     icon: <SmartToy />,
                     href: '/play-bot',
                 },

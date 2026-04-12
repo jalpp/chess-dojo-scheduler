@@ -7,10 +7,8 @@ import { MaiaRating } from './maiaengine';
 import { UseMaiaEngineResult } from './useMaiaEngine';
 import { TimeControl } from './PlayBotSetup';
 import { getOpeningBookMove } from './openingBook';
+import { logger } from '@/logging/logger';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
 export type PlayerColor = 'white' | 'black';
 
@@ -60,9 +58,6 @@ export interface UseMaiaGameResult {
     resign: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 
 function detectTermination(chess: Chess): { result: GameResult; reason: GameOverReason } {
     if (!chess.isGameOver()) return { result: null, reason: null };
@@ -81,9 +76,7 @@ function botDelay(): number { return 450 + Math.random() * 800; }
 
 const UNLIMITED_TC: TimeControl = { initialMs: null, incrementMs: 0 };
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
+
 
 export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
     const chessRef = useRef<Chess | null>(null);
@@ -132,9 +125,7 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         !!chess &&
         (chess.turn() === 'w') === (playerColor === 'white');
 
-    // ------------------------------------------------------------------
-    // Clock tick — runs every 100ms when a clock is active
-    // ------------------------------------------------------------------
+
     const startClockInterval = useCallback(() => {
         if (clockIntervalRef.current) clearInterval(clockIntervalRef.current);
         clockTickRef.current = Date.now();
@@ -255,7 +246,7 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
                     reconcile(chess, board);
                     setMoves((prev) => [...prev, {
                         san: move.san,
-                        uci: move.uci ?? bestMove!,
+                        uci: move.uci ?? bestMove,
                         fen: move.fen ?? chess.fen(),
                         ms: elapsed,
                     }]);
@@ -273,7 +264,7 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
                 }
             }
         } catch (e) {
-            console.error('[MaiaBot] eval error:', e);
+            logger.error('[MaiaBot] eval error:', e);
         } finally {
             if (!cancelBotRef.current) setBotThinking(false);
         }

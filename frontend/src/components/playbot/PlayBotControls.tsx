@@ -2,7 +2,6 @@
 
 import {
     Add,
-    Analytics,
     EmojiEvents,
     Flag,
     Handshake,
@@ -25,13 +24,8 @@ import {
     PlayerColor,
     UseMaiaGameResult,
 } from './useMaiaGame';
-import { FEN } from '@jackstenglein/chess';
 import { useState } from 'react';
 import { SaveMaiaGameDialog } from './SaveGameDialog';
-
-// ---------------------------------------------------------------------------
-// Clock display
-// ---------------------------------------------------------------------------
 
 function formatClock(ms: number | null): string {
     if (ms === null) return '∞';
@@ -49,6 +43,16 @@ interface ClockDisplayProps {
     isLow: boolean;
     label: string;
 }
+
+const REASON_LABELS: Record<NonNullable<GameOverReason>, string> = {
+    checkmate: 'Checkmate',
+    stalemate: 'Stalemate',
+    insufficient: 'Insufficient Material',
+    repetition: 'Threefold Repetition',
+    'fifty-move': '50-Move Rule',
+    resign: 'Resignation',
+    timeout: 'Time Out',
+};
 
 function ClockDisplay({ ms, isActive, isLow, label }: ClockDisplayProps) {
     const isTimed = ms !== null;
@@ -89,19 +93,8 @@ function ClockDisplay({ ms, isActive, isLow, label }: ClockDisplayProps) {
     );
 }
 
-// ---------------------------------------------------------------------------
-// Result banner
-// ---------------------------------------------------------------------------
 
-const REASON_LABELS: Record<NonNullable<GameOverReason>, string> = {
-    checkmate: 'Checkmate',
-    stalemate: 'Stalemate',
-    insufficient: 'Insufficient Material',
-    repetition: 'Threefold Repetition',
-    'fifty-move': '50-Move Rule',
-    resign: 'Resignation',
-    timeout: 'Time Out',
-};
+
 
 function ResultBanner({
     result, reason, playerColor,
@@ -130,29 +123,6 @@ function ResultBanner({
     );
 }
 
-// ---------------------------------------------------------------------------
-// Win probability bar
-// ---------------------------------------------------------------------------
-
-function WinProbBar({ prob }: { prob: number | null }) {
-    if (prob === null) return null;
-    const whitePct = Math.round(prob * 100);
-    return (
-        <Stack spacing={0.5}>
-            <Stack direction='row' justifyContent='space-between'>
-                <Typography variant='caption' color='text.secondary'>Maia eval</Typography>
-                <Typography variant='caption' color='text.secondary'>W {whitePct}% — B {100 - whitePct}%</Typography>
-            </Stack>
-            <Box sx={{ height: 5, borderRadius: 3, overflow: 'hidden', bgcolor: 'grey.800', display: 'flex' }}>
-                <Box sx={{ height: '100%', width: `${whitePct}%`, bgcolor: 'grey.100', transition: 'width 0.35s ease' }} />
-            </Box>
-        </Stack>
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Main controls
-// ---------------------------------------------------------------------------
 
 interface PlayBotControlsProps {
     game: UseMaiaGameResult;
@@ -163,7 +133,7 @@ interface PlayBotControlsProps {
 export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControlsProps) {
     const {
         moves, playerColor, playerToMove, botThinking,
-        result, reason, maiaWinProb, resign, startFen,
+        result, reason, resign, startFen,
         clock, timeControl,
     } = game;
 
@@ -179,16 +149,9 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
     const playerMs = playerColor === 'white' ? clock.whiteMs : clock.blackMs;
     const botClockActive = clock.running === botColor && !gameOver;
     const playerClockActive = clock.running === playerColor && !gameOver;
-
-    // "Low time" = under 30 seconds
     const LOW_TIME_MS = 30_000;
     const botLow = isTimed && botMs !== null && botMs < LOW_TIME_MS;
     const playerLow = isTimed && playerMs !== null && playerMs < LOW_TIME_MS;
-
-    const isCustomStart = startFen && startFen !== FEN.start;
-    const pgnMoves = moves.map((m, i) => (i % 2 === 0 ? `${Math.floor(i / 2) + 1}. ${m.san}` : m.san)).join(' ');
-    const pgnFull = isCustomStart ? `[SetUp "1"]\n[FEN "${startFen}"]\n\n${pgnMoves}` : pgnMoves;
-    const analyzeHref = pgnMoves ? `/games/analysis?pgn=${encodeURIComponent(pgnFull)}` : '/games/analysis';
 
     return (
         <Stack spacing={1.5} sx={{ p: 1.5, height: '100%' }}>
@@ -197,9 +160,9 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                 <SmartToy color='primary' fontSize='small' />
                 <Typography variant='subtitle2' fontWeight='bold'>Maia</Typography>
                 <Chip label={maiaRating} size='small' color='primary' variant='outlined' />
-                {isTimed && (
+                {isTimed && timeControl.initialMs !== null && (
                     <Chip
-                        label={`${timeControl.initialMs! / 60000}+${timeControl.incrementMs / 1000}`}
+                        label={`${timeControl.initialMs / 60000}+${timeControl.incrementMs / 1000}`}
                         size='small'
                         variant='outlined'
                         sx={{ fontSize: '0.7rem' }}
@@ -232,9 +195,6 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                     {botThinking ? 'Maia is thinking…' : playerToMove ? 'Your move' : 'Waiting for Maia…'}
                 </Typography>
             }
-
-            {/* Win probability */}
-            <WinProbBar prob={maiaWinProb} />
 
             <Box sx={{ flex: 1 }} />
 

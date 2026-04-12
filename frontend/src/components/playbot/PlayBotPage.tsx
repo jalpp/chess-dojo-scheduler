@@ -5,7 +5,7 @@ import { BoardApi, PrimitiveMove, reconcile } from '@/board/Board';
 import { CustomUnderboardTab } from '@/board/pgn/boardTools/underboard/underboardTabs';
 import { Chess, FEN } from '@jackstenglein/chess';
 import { SmartToy } from '@mui/icons-material';
-import { Box, Chip, Typography } from '@mui/material';
+import { Box} from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MaiaRating } from "./maiaengine";
 import { MaiaDownloadModal } from './MaiaDownloadModal';
@@ -74,9 +74,7 @@ export function PlayBotPage() {
         engine.status === 'no-cache' ||
         engine.status === 'downloading';
 
-    // ------------------------------------------------------------------
-    // Auto-start from query params once model is ready
-    // ------------------------------------------------------------------
+
     useEffect(() => {
         if (autoStartedRef.current) return;
         if (engine.status !== 'ready') return;
@@ -172,18 +170,6 @@ export function PlayBotPage() {
                     gap: 1,
                 }}
             >
-                <SmartToy color='primary' />
-                <Typography variant='h6' fontWeight='bold'>
-                    Play vs Maia
-                </Typography>
-                {view === 'playing' && (
-                    <Chip
-                        label={`Maia ${activeRating}`}
-                        size='small'
-                        color='primary'
-                        variant='outlined'
-                    />
-                )}
             </Box>
 
             <PgnBoard

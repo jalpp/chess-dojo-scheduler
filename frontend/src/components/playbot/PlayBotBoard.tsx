@@ -1,19 +1,5 @@
 'use client';
 
-/**
- * PlayBotBoard
- *
- * Interactive chessboard for play against Maia.
- *
- * In `previewOnly` mode (setup screen) the board shows the start position
- * but pieces are not movable — it updates live as the user types a FEN.
- *
- * Sizing: fills its parent container 100% × 100% — the parent is
- * responsible for making the container square via aspectRatio or equal
- * width/height. Chessground requires an explicit pixel size, so the
- * parent Paper must have a real height (not 'auto').
- */
-
 import Board, {
     BoardApi,
     PrimitiveMove,
@@ -26,11 +12,8 @@ import { Box, CircularProgress, Stack, Tooltip, Typography } from '@mui/material
 import { SmartToy } from '@mui/icons-material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MaiaRating } from './maiaengine';
-import { UsePlayBotGameResult } from './usePlayBotGame';
+import { UsePlayBotGameResult } from './playbot';
 
-// ---------------------------------------------------------------------------
-// PlayBotBoard
-// ---------------------------------------------------------------------------
 
 interface PlayBotBoardProps {
     game: UsePlayBotGameResult;
@@ -47,9 +30,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
 
     const orientation = playerColor === 'white' ? 'white' : 'black';
 
-    // ------------------------------------------------------------------
-    // onMove: Board calls after every player drag
-    // ------------------------------------------------------------------
     const onMove = useCallback(
         (_board: BoardApi, _chess: Chess, primitive: PrimitiveMove) => {
             if (previewOnly) return;
@@ -58,9 +38,7 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
         [onPlayerMove, previewOnly],
     );
 
-    // ------------------------------------------------------------------
-    // onInitialize: fires once when Chessground is ready
-    // ------------------------------------------------------------------
+
     const onInitialize = useCallback(
         (board: BoardApi, _chess: Chess, _boardRef: React.RefObject<HTMLDivElement | null>) => {
             setBoardApi(board);
@@ -70,9 +48,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
         [],
     );
 
-    // ------------------------------------------------------------------
-    // Reconcile board state after every game state change
-    // ------------------------------------------------------------------
     useEffect(() => {
         const board = boardApiRef.current;
         if (!board) return;
@@ -96,7 +71,7 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
         });
     }, [chess, moves, playerToMove, result, orientation, previewOnly]);
 
-    // Sync orientation when color changes
+
     useEffect(() => {
         const board = boardApiRef.current;
         if (board && board.state.orientation !== orientation) {
@@ -173,9 +148,6 @@ export function PlayBotBoard({ game, previewOnly = false }: PlayBotBoardProps) {
     );
 }
 
-// ---------------------------------------------------------------------------
-// PlayerHeader
-// ---------------------------------------------------------------------------
 
 interface PlayerHeaderProps {
     label: string;

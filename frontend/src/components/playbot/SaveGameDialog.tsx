@@ -44,9 +44,6 @@ import { MaiaRating } from './maiaengine';
 import { GameResult as BotGameResult, MoveRecord, PlayerColor } from './useMaiaGame';
 import { FEN } from '@jackstenglein/chess';
 
-// ---------------------------------------------------------------------------
-// PGN builder
-// ---------------------------------------------------------------------------
 
 function buildResultTag(result: BotGameResult): string {
     if (result === 'white') return GameResult.White;
@@ -74,11 +71,11 @@ function buildPgn(opts: {
         `[Black "${blackName}"]`,
         `[Result "${resultTag}"]`,
         `[Date "${dateStr}"]`,
-        `[Site "ChessDojo — Play vs Maia ${maiaRating}"]`,
+        `[Site "ChessDojo — Play Dojo Sparring Bot ${maiaRating}"]`,
         ...(isCustomStart ? [`[SetUp "1"]`, `[FEN "${startFen}"]`] : []),
     ].join('\n');
 
-    // Build move text: "1. e4 e5 2. Nf3 ..."
+  
     const moveParts: string[] = [];
     for (let i = 0; i < moves.length; i++) {
         const moveNum = Math.floor(i / 2) + 1;
@@ -91,10 +88,6 @@ function buildPgn(opts: {
 
     return `${headers}\n\n${moveParts.join(' ')}`;
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 interface SaveMaiaGameDialogProps {
     open: boolean;
@@ -199,7 +192,6 @@ export function SaveMaiaGameDialog({
 
                     <Divider />
 
-                    {/* Folder picker */}
                     <Stack spacing={0.5}>
                         <FormControlLabel
                             control={

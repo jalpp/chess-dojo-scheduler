@@ -1,14 +1,5 @@
 'use client';
 
-/**
- * PlayMaiaDialog
- *
- * Shown when the user clicks "Play vs Maia" on a sparring position card.
- * The time control and color are already fixed by the position config.
- * The only choice the user makes is the Maia rating level.
- *
- * Routes to: /play-bot?fen=...&mins=...&inc=...&color=...&rating=...
- */
 
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
 import {
@@ -85,7 +76,7 @@ export function PlayMaiaDialog({
             <DialogTitle>
                 <Stack direction='row' alignItems='center' spacing={1}>
                     <SmartToy color='primary' />
-                    <span>Play vs Maia</span>
+                    <span>Play vs Dojo Sparring Bot</span>
                 </Stack>
                 {positionTitle && (
                     <Typography variant='body2' color='text.secondary' mt={0.5}>
@@ -127,7 +118,7 @@ export function PlayMaiaDialog({
                         <Select
                             size='small'
                             value={maiaRating}
-                            onChange={(e) => setMaiaRating(Number(e.target.value) as MaiaRating)}
+                            onChange={(e) => setMaiaRating(e.target.value as MaiaRating)}
                             fullWidth
                         >
                             {MAIA_RATINGS.map((r) => (
