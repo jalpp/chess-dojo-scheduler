@@ -7,7 +7,9 @@
 
 import { logger } from '@/logging/logger';
 import { objectStorage } from '@/stockfish/engine/objectStorage';
+import { InferenceSession, Tensor } from 'onnxruntime-web';
 import allMovesDict from './data/all_moves.json';
+
 import allMovesReversedDict from './data/all_moves_reversed.json';
 
 const ALL_MOVES = allMovesDict as Record<string, number>;
@@ -322,8 +324,7 @@ export class MaiaEngine {
     }
 
     private async createSession(buffer: ArrayBuffer): Promise<void> {
-        const ort = await import('onnxruntime-web');
-        this.session = await ort.InferenceSession.create(buffer, {
+        this.session = await InferenceSession.create(buffer, {
             executionProviders: ['wasm'],
         });
         this.onStatusChange('ready');
@@ -331,9 +332,6 @@ export class MaiaEngine {
 
     async evaluate(fen: string, eloSelf: number, eloOppo: number): Promise<MaiaEvalResult> {
         if (!this.session) throw new Error('Maia model not loaded');
-
-        const ort = await import('onnxruntime-web');
-        const { Tensor } = ort;
 
         const isBlack = fen.split(' ')[1] === 'b';
         const workFen = isBlack ? mirrorFEN(fen) : fen;
