@@ -5,7 +5,7 @@ import Board from '@/board/Board';
 import { getLigaIconBasedOnTimeControl } from '@/components/calendar/eventViewer/LigaTournamentViewer';
 import { Position as PositionModel } from '@/database/requirement';
 import Icon from '@/style/Icon';
-import { Biotech } from '@mui/icons-material';
+import { Biotech, Close as CloseIcon, SmartDisplay } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import { LoadingButton } from '@mui/lab';
@@ -16,6 +16,10 @@ import {
     CardActions,
     CardContent,
     CardHeader,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    IconButton,
     Menu,
     MenuItem,
     Stack,
@@ -44,6 +48,7 @@ const Position = ({ position, orientation }: PositionProps) => {
     const lichessRequest = useRequest();
     const playComputerAnchor = useRef<HTMLButtonElement>(null);
     const [playComputerOpen, setPlayComputerOpen] = useState(false);
+    const [videoOpen, setVideoOpen] = useState(false);
 
     const onCopy = (name: string) => {
         setCopied(name);
@@ -190,6 +195,18 @@ const Position = ({ position, orientation }: PositionProps) => {
                     </Button>
                 </Tooltip>
 
+                {position.videoUrl && (
+                    <Tooltip title='Watch the video for this position'>
+                        <Button
+                            data-testid='position-video'
+                            startIcon={<SmartDisplay sx={{ color: '#e00000' }} />}
+                            onClick={() => setVideoOpen(true)}
+                        >
+                            Video
+                        </Button>
+                    </Tooltip>
+                )}
+
                 <Menu
                     open={playComputerOpen}
                     onClose={() => setPlayComputerOpen(false)}
@@ -215,6 +232,46 @@ const Position = ({ position, orientation }: PositionProps) => {
                     </MenuItem>
                 </Menu>
             </CardActions>
+
+            {position.videoUrl && (
+                <Dialog
+                    open={videoOpen}
+                    onClose={() => setVideoOpen(false)}
+                    maxWidth='md'
+                    fullWidth
+                >
+                    <DialogTitle
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                        }}
+                    >
+                        <Typography variant='h6' component='span'>
+                            {position.title}
+                        </Typography>
+                        <IconButton
+                            aria-label='close'
+                            onClick={() => setVideoOpen(false)}
+                            size='small'
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </DialogTitle>
+                    <DialogContent>
+                        <Box sx={{ width: 1, aspectRatio: '1.77' }}>
+                            <iframe
+                                src={position.videoUrl}
+                                title={`${position.title} video`}
+                                allow='accelerometer; autoplay; clipboard-write; encrypted-media; fullscreen; gyroscope; picture-in-picture; web-share'
+                                allowFullScreen
+                                style={{ width: '100%', height: '100%', border: 0 }}
+                            />
+                        </Box>
+                    </DialogContent>
+                </Dialog>
+            )}
         </Card>
     );
 };
