@@ -70,9 +70,9 @@ test.describe('Admin game review page', () => {
     test('displays game review cohort groups with member names', async ({ page }) => {
         await expect(page.locator('input[value="Group A"]')).toBeVisible();
         await expect(page.locator('input[value="Group B"]')).toBeVisible();
-        await expect(page.getByText('Alice')).toBeVisible();
-        await expect(page.getByText('Bob')).toBeVisible();
-        await expect(page.getByText('Charlie')).toBeVisible();
+        await expect(page.getByText('Alice').first()).toBeVisible();
+        await expect(page.getByText('Bob').first()).toBeVisible();
+        await expect(page.getByText('Charlie').first()).toBeVisible();
     });
 
     test('displays dojoCohort next to members', async ({ page }) => {
