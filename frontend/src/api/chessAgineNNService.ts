@@ -2,14 +2,13 @@
  * ChessAgine Neural Network Service
  *
  * Calls the ChessAgine NN server for Maia3 position analysis.
- * Follows the same class-based pattern as ChessDBService.
  */
 
 
 import { MaiaEvalResult, MaiaRating } from '@/components/playbot/maiaengine';
 import { axiosService } from './axiosService';
 
-const NN_BASE_URL = ""
+const NN_BASE_URL = "https://nn-analyze-service-717993082875.us-central1.run.app"
 
 
 

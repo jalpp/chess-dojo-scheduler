@@ -169,15 +169,6 @@ export function PlayBotControls({ game, maiaRating, onNewGame }: PlayBotControls
                         sx={{ fontSize: '0.7rem' }}
                     />
                 )}
-                <Tooltip title='Plays like a real human at this rating — not a weakened engine'>
-                    <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{ cursor: 'help', textDecoration: 'underline dotted' }}
-                    >
-                        human-like AI
-                    </Typography>
-                </Tooltip>
             </Stack>
 
             <Divider />

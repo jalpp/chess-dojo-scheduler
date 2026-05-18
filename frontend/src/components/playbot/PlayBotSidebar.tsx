@@ -191,15 +191,6 @@ export function PlayBotSidebar({ game, maiaRating, onNewGame }: PlayBotSidebarPr
                     Maia
                 </Typography>
                 <Chip label={maiaRating} size='small' color='primary' variant='outlined' />
-                <Tooltip title='Plays like a real human at this rating — not a weakened engine'>
-                    <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{ cursor: 'help', textDecoration: 'underline dotted' }}
-                    >
-                        human-like AI
-                    </Typography>
-                </Tooltip>
             </Stack>
 
             <Divider />
