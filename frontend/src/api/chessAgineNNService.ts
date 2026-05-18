@@ -8,7 +8,7 @@
 import { MaiaEvalResult, MaiaRating } from '@/components/playbot/maiaengine';
 import { axiosService } from './axiosService';
 
-const NN_BASE_URL = "https://nn-analyze-service-717993082875.us-central1.run.app"
+const NN_BASE_URL = "https://www.chessagine.com/api/nn"
 
 
 
@@ -60,7 +60,8 @@ export class ChessAgineNNService {
         if (!fen) return { error: 'Missing required argument: fen' };
 
         try {
-            const response = await axiosService.post<NNAnalyzeResponse>(`${NN_BASE_URL}/nn-analyze`, {
+            const response = await axiosService.post<NNAnalyzeResponse>(NN_BASE_URL, {
+                endpoint: 'analyze',
                 fen,
                 engine: 'maia3',
                 rating,
@@ -96,7 +97,10 @@ export class ChessAgineNNService {
         if (!fen) return { error: 'Missing required argument: fen' };
 
         try {
-            const response = await axiosService.post<NNBatchResponse>(`${NN_BASE_URL}/nn-batch-maia3`, { fen });
+            const response = await axiosService.post<NNBatchResponse>(NN_BASE_URL, {
+                endpoint: 'batch-maia3',
+                fen,
+            });
 
             if (!response.data.success) {
                 return { error: 'NN server returned success: false' };
