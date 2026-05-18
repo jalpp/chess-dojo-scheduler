@@ -8,8 +8,7 @@ import { Chess, FEN } from '@jackstenglein/chess';
 import { SmartToy } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { MaiaDownloadModal } from './MaiaDownloadModal';
-import { MaiaRating } from './maiaengine';
+import { MAIA_RATINGS, MaiaRating } from './maiaengine';
 import { PlayBotAfterPgn } from './PlayBotAfterPgn';
 import { PlayBotControls } from './PlayBotControls';
 import { PlayBotSetup, PlayBotStartOpts, TimeControl } from './PlayBotSetup';
@@ -38,7 +37,7 @@ function parseQueryOpts(searchParams: URLSearchParams): PlayBotStartOpts | null 
 
     const ratingStr = searchParams.get('rating');
     const ratingNum = parseInt(ratingStr ?? '1500');
-    const validRatings: MaiaRating[] = [1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900];
+    const validRatings: MaiaRating[] = MAIA_RATINGS;
     const maiaRating: MaiaRating = (
         validRatings.includes(ratingNum as MaiaRating) ? ratingNum : 1500
     ) as MaiaRating;
@@ -47,7 +46,6 @@ function parseQueryOpts(searchParams: URLSearchParams): PlayBotStartOpts | null 
 }
 
 interface PlayBotAutoStartProps {
-    engine: ReturnType<typeof useMaiaEngine>;
     maiaGame: ReturnType<typeof useMaiaGame>;
     setView: (v: PageView) => void;
     setActiveRating: (r: MaiaRating) => void;
@@ -58,7 +56,6 @@ interface PlayBotAutoStartProps {
 }
 
 function PlayBotAutoStart({
-    engine,
     maiaGame,
     setView,
     setActiveRating,
@@ -71,7 +68,6 @@ function PlayBotAutoStart({
 
     useEffect(() => {
         if (autoStartedRef.current) return;
-        if (engine.status !== 'ready') return;
 
         const opts = parseQueryOpts(searchParams);
         if (!opts) return;
@@ -83,7 +79,7 @@ function PlayBotAutoStart({
         maiaGame.startGame(opts);
         setView('playing');
         setInitKey((k) => k + 1);
-    }, [engine.status, searchParams, maiaGame]);
+    }, [searchParams, maiaGame]);
 
     return null;
 }
@@ -101,11 +97,6 @@ export function PlayBotPage() {
     const pgnBoardRef = useRef<PgnBoardApi>(null);
     const autoStartedRef = useRef(false);
 
-    const modelLoading =
-        engine.status === 'idle' ||
-        engine.status === 'loading' ||
-        engine.status === 'no-cache' ||
-        engine.status === 'downloading';
 
     const onInitialize = useCallback(
         (board: BoardApi, chess: Chess) => {
@@ -171,7 +162,6 @@ export function PlayBotPage() {
         <Box sx={{ pt: { xs: 1, sm: 2 } }}>
             <Suspense fallback={null}>
                 <PlayBotAutoStart
-                    engine={engine}
                     maiaGame={maiaGame}
                     setView={setView}
                     setActiveRating={setActiveRating}
@@ -181,15 +171,6 @@ export function PlayBotPage() {
                     autoStartedRef={autoStartedRef}
                 />
             </Suspense>
-
-            <MaiaDownloadModal
-                open={modelLoading}
-                status={engine.status}
-                progress={engine.progress}
-                error={engine.error}
-                onDownload={engine.downloadModel}
-            />
-
             <Box
                 sx={{ px: { xs: 1, sm: 3 }, pb: 1, display: 'flex', alignItems: 'center', gap: 1 }}
             />

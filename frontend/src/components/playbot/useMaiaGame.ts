@@ -221,7 +221,6 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         if (!chess || !board) return;
         if (!gameActiveRef.current) return;
         if (cancelBotRef.current) return;
-        if (engine.status !== 'ready') return;
         if (resultRef.current !== null) return;
 
         setBotThinking(true);
@@ -292,10 +291,9 @@ export function useMaiaGame(engine: UseMaiaEngineResult): UseMaiaGameResult {
         if (result !== null) return;
         if (playerToMove) return;
         if (botThinking) return;
-        if (engine.status !== 'ready') return;
         void makeBotMove();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tick, gameActive, engine.status, result, playerToMove, botThinking]);
+    }, [tick, gameActive, result, playerToMove, botThinking]);
 
     // ------------------------------------------------------------------
     // Board callbacks

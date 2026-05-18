@@ -42,7 +42,12 @@ export interface UsePlayBotGameResult {
 }
 
 export const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
-    1100: 'Beginner',
+    600:  'Absolute Beginner',
+    700:  'Beginner',
+    800:  'Beginner',
+    900:  'Casual Player',
+    1000: 'Casual Player',
+    1100: 'Novice',
     1200: 'Advanced Beginner',
     1300: 'Intermediate',
     1400: 'Intermediate',
@@ -51,4 +56,11 @@ export const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
     1700: 'Strong Club Player',
     1800: 'Expert',
     1900: 'Advanced Expert',
+    2000: 'Candidate Master',
+    2100: 'Candidate Master',
+    2200: 'FIDE Master',
+    2300: 'FIDE Master',
+    2400: 'International Master',
+    2500: 'Grandmaster',
+    2600: 'Super Grandmaster',
 };

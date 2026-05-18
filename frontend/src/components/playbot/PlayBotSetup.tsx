@@ -22,7 +22,9 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
+import { SparringPositionPicker } from './SparringPositionPicker';
 import { RATING_DESCRIPTIONS } from './playbot';
+import { Position } from '@/database/requirement';
 import { PlayerColor } from './useMaiaGame';
 
 type ColorChoice = PlayerColor | 'random';
@@ -118,6 +120,27 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
         return { initialMs: preset.mins * 60 * 1000, incrementMs: preset.inc * 1000 };
     };
 
+    const handleSparringSelect = (position: Position) => {
+        handleFenChange(position.fen.trim());
+        setShowFen(true);
+        // Pre-fill time control from the position if it has one
+        if (position.limitSeconds > 0) {
+            const mins = position.limitSeconds / 60;
+            const inc = position.incrementSeconds;
+            const label = `${mins}+${inc}`;
+            const matchedPreset = TIME_PRESETS.find(
+                (p) => p.mins === mins && p.inc === inc,
+            );
+            if (matchedPreset) {
+                setSelectedTime(label);
+            } else {
+                setSelectedTime('custom');
+                setCustomMins(String(mins));
+                setCustomInc(String(inc));
+            }
+        }
+    };
+
     const handleStart = () => {
         const playerColor: PlayerColor =
             colorChoice === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : colorChoice;
@@ -167,7 +190,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                     </Select>
                 </FormControl>
                 <Typography variant='caption' color='text.secondary'>
-                    Powered by Maia2 neural network by UofT
+                    Powered by Maia3 Neural Net Engine Database
                 </Typography>
             </Stack>
 
@@ -341,6 +364,11 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
                     </ToggleButton>
                 </ToggleButtonGroup>
             </Stack>
+
+            <Divider />
+
+            {/* Sparring position picker */}
+            <SparringPositionPicker onSelect={handleSparringSelect} />
 
             <Divider />
 

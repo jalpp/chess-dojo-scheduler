@@ -3,64 +3,42 @@
 /**
  * useMaiaEngine
  *
- * React hook that owns the full lifecycle of the Maia ONNX model:
- *   - First load: checks IndexedDB cache, shows "download needed" state if absent
- *   - Download: streams the model, reports progress, caches in IndexedDB
- *   - Evaluate: runs inference and returns { bestMove, policy, value }
- *
- * Designed to mirror the MaiaEngineContext pattern from
- * github.com/CSSLab/maia-platform-frontend but as a standalone hook
- * that fits the chess-dojo architecture (no global Context needed).
+ * React hook for Maia move generation.
+ * Previously managed ONNX model download/cache lifecycle.
+ * Now calls the ChessAgine neural-net API — no download, always ready.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getMaiaModelUrl, MaiaEngine, MaiaEvalResult, MaiaStatus } from './maiaengine';
+import { useCallback } from 'react';
+import { callMaiaApi, MaiaEvalResult, MaiaRating, MaiaStatus } from './maiaengine';
 
 export type { MaiaEvalResult, MaiaStatus };
 
 export interface UseMaiaEngineResult {
-    /** Current lifecycle status of the engine */
+    /** Always 'ready' — no download needed */
     status: MaiaStatus;
-    /** Download progress 0-100 (only relevant while status === 'downloading') */
+    /** Always 0 — no download */
     progress: number;
-    /** Error message if status === 'error' */
+    /** Always null — no download errors */
     error: string | null;
-    /** Kick off model download from CDN → IndexedDB */
+    /** No-op — no download needed */
     downloadModel: () => Promise<void>;
-    /** Run inference. Resolves immediately if ready, throws if not. */
+    /** Run inference via the API */
     evaluate: (fen: string, eloSelf: number, eloOppo: number) => Promise<MaiaEvalResult>;
 }
 
 export function useMaiaEngine(): UseMaiaEngineResult {
-    const [status, setStatus] = useState<MaiaStatus>('idle');
-    const [progress, setProgress] = useState(0);
-    const [error, setError] = useState<string | null>(null);
-    const engineRef = useRef<MaiaEngine | null>(null);
-
-    useEffect(() => {
-        const engine = new MaiaEngine({
-            modelUrl: getMaiaModelUrl(),
-            onStatusChange: setStatus,
-            onProgress: setProgress,
-            onError: setError,
-        });
-        engineRef.current = engine;
-        void engine.initialize();
-    }, []);
-
-    const downloadModel = useCallback(async () => {
-        if (!engineRef.current) return;
-        setError(null);
-        await engineRef.current.download();
-    }, []);
-
     const evaluate = useCallback(
-        async (fen: string, eloSelf: number, eloOppo: number): Promise<MaiaEvalResult> => {
-            if (!engineRef.current) throw new Error('Engine not initialized');
-            return await engineRef.current.evaluate(fen, eloSelf, eloOppo);
+        async (fen: string, eloSelf: number, _eloOppo: number): Promise<MaiaEvalResult> => {
+            return callMaiaApi(fen, eloSelf as MaiaRating);
         },
         [],
     );
 
-    return { status, progress, error, downloadModel, evaluate };
+    return {
+        status: 'ready',
+        progress: 0,
+        error: null,
+        downloadModel: async () => undefined,
+        evaluate,
+    };
 }

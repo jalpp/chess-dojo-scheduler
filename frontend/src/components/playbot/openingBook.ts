@@ -29,6 +29,11 @@ const POSIRA_BASE = 'https://api.posira.dev/api/v1/explorer';
  */
 
 const MAIA_TO_POSIRA_RATINGS: Record<MaiaRating, string> = {
+    600:  '1000',
+    700:  '1000',
+    800:  '1000',
+    900:  '1000',
+    1000: '1000',
     1100: '1000',
     1200: '1000,1200',
     1300: '1200',
@@ -38,6 +43,13 @@ const MAIA_TO_POSIRA_RATINGS: Record<MaiaRating, string> = {
     1700: '1600,1800',
     1800: '1800',
     1900: '1800,2000',
+    2000: '2000',
+    2100: '2000,2200',
+    2200: '2200',
+    2300: '2200,2500',
+    2400: '2500',
+    2500: '2500',
+    2600: '2500',
 };
 
 interface PosiraMove {

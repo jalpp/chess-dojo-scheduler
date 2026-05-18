@@ -6,8 +6,7 @@ import { getLigaIconBasedOnTimeControl } from '@/components/calendar/eventViewer
 import { PlayMaiaDialog } from '@/components/playbot/PlayMaiaDialog';
 import { Position as PositionModel } from '@/database/requirement';
 import Icon from '@/style/Icon';
-import { Biotech, SmartToy } from '@mui/icons-material';
-import { Biotech, Close as CloseIcon, SmartDisplay } from '@mui/icons-material';
+import { Biotech, Close as CloseIcon, SmartDisplay, SmartToy } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import ContentPasteIcon from '@mui/icons-material/ContentPaste';
 import { LoadingButton } from '@mui/lab';
@@ -51,6 +50,7 @@ const Position = ({ position, orientation }: PositionProps) => {
     const playComputerAnchor = useRef<HTMLButtonElement>(null);
     const [playComputerOpen, setPlayComputerOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
+    const [playMaiaOpen, setPlayMaiaOpen] = useState(false);
 
     const onCopy = (name: string) => {
         setCopied(name);
