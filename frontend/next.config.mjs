@@ -87,6 +87,7 @@ const pagesWithVideos = [
     '/scoreboard/:path*',
     '/learn/guides',
     '/learn/live-classes',
+    '/learn/sparring',
     '/live-classes',
 
     // Blog
