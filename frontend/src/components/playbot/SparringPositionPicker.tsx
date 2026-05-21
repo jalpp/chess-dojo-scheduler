@@ -114,7 +114,12 @@ export function SparringPositionPicker({ onSelect }: SparringPositionPickerProps
                 onClick={() => setOpen((v) => !v)}
                 endIcon={open ? <ExpandLess /> : <ExpandMore />}
                 startIcon={<FitnessCenterRounded sx={{ fontSize: '1rem !important' }} />}
-                sx={{ alignSelf: 'flex-start', px: 0, color: 'text.secondary', textTransform: 'none' }}
+                sx={{
+                    alignSelf: 'flex-start',
+                    px: 0,
+                    color: 'text.secondary',
+                    textTransform: 'none',
+                }}
             >
                 <Typography variant='subtitle2' fontWeight='bold'>
                     BROWSE SPARRING POSITIONS
@@ -166,7 +171,10 @@ export function SparringPositionPicker({ onSelect }: SparringPositionPickerProps
                                                 selectedPosition?.fen === pos.fen &&
                                                 selectedPosition?.title === pos.title;
                                             return (
-                                                <Grid key={pos.fen + pos.title} size={{ xs: 6, sm: 4 }}>
+                                                <Grid
+                                                    key={pos.fen + pos.title}
+                                                    size={{ xs: 6, sm: 4 }}
+                                                >
                                                     <Card
                                                         variant='outlined'
                                                         sx={{
@@ -222,14 +230,20 @@ export function SparringPositionPicker({ onSelect }: SparringPositionPickerProps
                                                                     <Chip
                                                                         label={turnLabel(pos.fen)}
                                                                         size='small'
-                                                                        sx={{ fontSize: '0.6rem', height: 16 }}
+                                                                        sx={{
+                                                                            fontSize: '0.6rem',
+                                                                            height: 16,
+                                                                        }}
                                                                     />
                                                                     {pos.limitSeconds > 0 && (
                                                                         <Chip
                                                                             label={`${pos.limitSeconds / 60}+${pos.incrementSeconds}`}
                                                                             size='small'
                                                                             variant='outlined'
-                                                                            sx={{ fontSize: '0.6rem', height: 16 }}
+                                                                            sx={{
+                                                                                fontSize: '0.6rem',
+                                                                                height: 16,
+                                                                            }}
                                                                         />
                                                                     )}
                                                                 </Stack>
@@ -247,12 +261,24 @@ export function SparringPositionPicker({ onSelect }: SparringPositionPickerProps
                             {selectedPosition && (
                                 <>
                                     <Divider />
-                                    <Stack direction='row' alignItems='center' justifyContent='space-between' spacing={1}>
+                                    <Stack
+                                        direction='row'
+                                        alignItems='center'
+                                        justifyContent='space-between'
+                                        spacing={1}
+                                    >
                                         <Stack spacing={0.25}>
                                             <Typography variant='body2' fontWeight='bold'>
                                                 {selectedPosition.title}
                                             </Typography>
-                                            <Typography variant='caption' color='text.secondary' sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}>
+                                            <Typography
+                                                variant='caption'
+                                                color='text.secondary'
+                                                sx={{
+                                                    fontFamily: 'monospace',
+                                                    fontSize: '0.65rem',
+                                                }}
+                                            >
                                                 {selectedPosition.fen.trim()}
                                             </Typography>
                                         </Stack>

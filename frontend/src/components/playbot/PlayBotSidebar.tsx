@@ -13,7 +13,7 @@
  */
 
 import { Add, Analytics, EmojiEvents, Flag, Handshake, SmartToy } from '@mui/icons-material';
-import { Box, Button, Chip, Divider, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
 import { useEffect, useRef } from 'react';
 import { MaiaRating } from './maiaengine';
 import {

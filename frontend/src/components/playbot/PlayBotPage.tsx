@@ -97,7 +97,6 @@ export function PlayBotPage() {
     const pgnBoardRef = useRef<PgnBoardApi>(null);
     const autoStartedRef = useRef(false);
 
-
     const onInitialize = useCallback(
         (board: BoardApi, chess: Chess) => {
             maiaGame.onBoardInit(board, chess);

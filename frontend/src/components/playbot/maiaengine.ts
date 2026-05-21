@@ -8,14 +8,31 @@
 import { chessAgineNNService } from '@/api/chessAgineNNService';
 
 export type MaiaRating =
-    | 600 | 700 | 800 | 900 | 1000
-    | 1100 | 1200 | 1300 | 1400 | 1500 | 1600 | 1700 | 1800 | 1900
-    | 2000 | 2100 | 2200 | 2300 | 2400 | 2500 | 2600;
+    | 600
+    | 700
+    | 800
+    | 900
+    | 1000
+    | 1100
+    | 1200
+    | 1300
+    | 1400
+    | 1500
+    | 1600
+    | 1700
+    | 1800
+    | 1900
+    | 2000
+    | 2100
+    | 2200
+    | 2300
+    | 2400
+    | 2500
+    | 2600;
 
 export const MAIA_RATINGS: MaiaRating[] = [
-    600, 700, 800, 900, 1000,
-    1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900,
-    2000, 2100, 2200, 2300, 2400, 2500, 2600,
+    600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100,
+    2200, 2300, 2400, 2500, 2600,
 ];
 
 /** Always 'ready' — no download needed with the API backend. */
@@ -31,10 +48,7 @@ export interface MaiaEvalResult {
  * Call the ChessAgine NN service for Maia move generation.
  * Uses maia2 engine (Maia3 server-side) at the given rating.
  */
-export async function callMaiaApi(
-    fen: string,
-    rating: MaiaRating,
-): Promise<MaiaEvalResult> {
+export async function callMaiaApi(fen: string, rating: MaiaRating): Promise<MaiaEvalResult> {
     const result = await chessAgineNNService.analyzeMaia(fen, rating);
     if (result.error || !result.data) {
         throw new Error(result.error ?? 'Maia API returned no data');

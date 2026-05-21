@@ -29,10 +29,10 @@ const POSIRA_BASE = 'https://api.posira.dev/api/v1/explorer';
  */
 
 const MAIA_TO_POSIRA_RATINGS: Record<MaiaRating, string> = {
-    600:  '1000',
-    700:  '1000',
-    800:  '1000',
-    900:  '1000',
+    600: '1000',
+    700: '1000',
+    800: '1000',
+    900: '1000',
     1000: '1000',
     1100: '1000',
     1200: '1000,1200',

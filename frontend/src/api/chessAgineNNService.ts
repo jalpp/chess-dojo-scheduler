@@ -4,13 +4,10 @@
  * Calls the ChessAgine NN server for Maia3 position analysis.
  */
 
-
 import { MaiaEvalResult, MaiaRating } from '@/components/playbot/maiaengine';
 import { axiosService } from './axiosService';
 
-const NN_BASE_URL = "https://www.chessagine.com/api/nn"
-
-
+const NN_BASE_URL = 'https://www.chessagine.com/api/nn';
 
 // ── Wire types ─────────────────────────────────────────────────────────────────
 

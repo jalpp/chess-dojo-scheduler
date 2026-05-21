@@ -1,5 +1,6 @@
 'use client';
 
+import { Position } from '@/database/requirement';
 import { Chess, FEN } from '@jackstenglein/chess';
 import { ExpandLess, ExpandMore, PlayArrow, Timer } from '@mui/icons-material';
 import {
@@ -22,9 +23,8 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { MAIA_RATINGS, MaiaRating } from './maiaengine';
-import { SparringPositionPicker } from './SparringPositionPicker';
 import { RATING_DESCRIPTIONS } from './playbot';
-import { Position } from '@/database/requirement';
+import { SparringPositionPicker } from './SparringPositionPicker';
 import { PlayerColor } from './useMaiaGame';
 
 type ColorChoice = PlayerColor | 'random';
@@ -128,9 +128,7 @@ export function PlayBotSetup({ onStart, initialRating = 1500 }: PlayBotSetupProp
             const mins = position.limitSeconds / 60;
             const inc = position.incrementSeconds;
             const label = `${mins}+${inc}`;
-            const matchedPreset = TIME_PRESETS.find(
-                (p) => p.mins === mins && p.inc === inc,
-            );
+            const matchedPreset = TIME_PRESETS.find((p) => p.mins === mins && p.inc === inc);
             if (matchedPreset) {
                 setSelectedTime(label);
             } else {

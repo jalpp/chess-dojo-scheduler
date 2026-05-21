@@ -1,7 +1,7 @@
 'use client';
 
 import { Add, EmojiEvents, Flag, Handshake, SaveOutlined, SmartToy } from '@mui/icons-material';
-import { Box, Button, Chip, Divider, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import { MaiaRating } from './maiaengine';
 import { SaveMaiaGameDialog } from './SaveGameDialog';

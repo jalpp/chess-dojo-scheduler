@@ -42,10 +42,10 @@ export interface UsePlayBotGameResult {
 }
 
 export const RATING_DESCRIPTIONS: Record<MaiaRating, string> = {
-    600:  'Absolute Beginner',
-    700:  'Beginner',
-    800:  'Beginner',
-    900:  'Casual Player',
+    600: 'Absolute Beginner',
+    700: 'Beginner',
+    800: 'Beginner',
+    900: 'Casual Player',
     1000: 'Casual Player',
     1100: 'Novice',
     1200: 'Advanced Beginner',
