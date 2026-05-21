@@ -14,15 +14,6 @@ import { callMaiaApi, MaiaEvalResult, MaiaRating, MaiaStatus } from './maiaengin
 export type { MaiaEvalResult, MaiaStatus };
 
 export interface UseMaiaEngineResult {
-    /** Always 'ready' — no download needed */
-    status: MaiaStatus;
-    /** Always 0 — no download */
-    progress: number;
-    /** Always null — no download errors */
-    error: string | null;
-    /** No-op — no download needed */
-    downloadModel: () => Promise<void>;
-    /** Run inference via the API */
     evaluate: (fen: string, eloSelf: number, eloOppo: number) => Promise<MaiaEvalResult>;
 }
 
@@ -35,10 +26,6 @@ export function useMaiaEngine(): UseMaiaEngineResult {
     );
 
     return {
-        status: 'ready',
-        progress: 0,
-        error: null,
-        downloadModel: async () => undefined,
         evaluate,
     };
 }
